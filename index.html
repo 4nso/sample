@@ -4,90 +4,173 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Zoom Misterioso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0f1220; --card:#181c30; --card2:#20253d; --line:#2c3252;
-    --text:#eef0f8; --muted:#9aa1bf; --accent:#ffcc33; --accent2:#3fd0c9;
-    --ok:#3ccf7a; --near:#f2b230; --no:#e5566b;
+    --paper:#f6ecd6; --card:#fffaf0; --white:#fffdf8; --ink:#3b2a1e; --muted:#8a6f58; --line:#e3d2b0;
+    --mustard:#f2b632; --tomato:#e4572e; --teal:#2a9d8f; --sky:#d6ecf3;
+    --ok:#2f9a58; --near:#d98a1c; --no:#d64545;
+    --type:"Special Elite","Courier New",monospace;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  body{min-height:100vh}
-  .wrap{max-width:760px;margin:0 auto;padding:14px 14px 40px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-  h1{font-size:22px;margin:0;letter-spacing:.3px}
-  h1 span{color:var(--accent)}
-  h2{font-size:20px;margin:0 0 10px}
-  .chip{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;letter-spacing:2px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  html,body{margin:0;color:var(--ink);font:17px/1.4 "Fredoka",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  body{min-height:100vh;background:var(--paper) radial-gradient(rgba(59,42,30,.09) 1.3px, transparent 1.5px) 0 0/20px 20px}
+  .wrap{max-width:760px;margin:0 auto;padding:12px 14px 50px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:16px}
+  .brand{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .logo{display:flex;align-items:center;gap:8px}
+  .logo .mascot{width:52px}
+  h1{font-size:25px;margin:0;font-weight:700;line-height:1;letter-spacing:.2px}
+  h1 span{color:var(--tomato)}
+  .hbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .chip{font-family:var(--type);background:var(--white);border:2.5px dashed var(--ink);border-radius:10px;padding:5px 10px;font-size:15px;white-space:nowrap}
+  .chip b{font-family:"Fredoka";letter-spacing:3px;font-size:17px}
+
+  h2{font-size:22px;margin:0 0 10px;font-weight:600;line-height:1.2}
+  p{margin:0 0 10px}
   .muted{color:var(--muted)}
   .center{text-align:center}
-  label{display:block;font-size:14px;color:var(--muted);margin:10px 0 6px}
-  input[type=text],select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:#0c0f1b;color:var(--text);font-size:17px;outline:none}
-  input[type=text]:focus{border-color:var(--accent2)}
-  .code-input{text-transform:uppercase;letter-spacing:6px;font-weight:800;text-align:center}
-  button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px 18px;font-size:17px;font-weight:700;cursor:pointer;background:var(--accent);color:#1b1b1b;text-decoration:none;white-space:nowrap}
-  button:disabled{opacity:.4;cursor:not-allowed}
-  button.sec{background:var(--card2);color:var(--text);border:1px solid var(--line)}
-  button.small{padding:8px 12px;font-size:14px}
+  .type{font-family:var(--type)}
+
+  /* ---------- card = fascicolo ---------- */
+  .card{position:relative;background:var(--card);border:3px solid var(--ink);border-radius:22px;box-shadow:5px 5px 0 var(--ink);padding:18px;margin:0 0 20px}
+  .card.tabbed{margin-top:26px;padding-top:24px}
+  .tab{position:absolute;top:-17px;left:18px;background:var(--mustard);border:3px solid var(--ink);border-radius:10px 10px 5px 5px;padding:2px 12px;font-family:var(--type);font-size:14px;transform:rotate(-2deg);white-space:nowrap}
+  .tab.red{background:var(--tomato);color:#fff}
+  .tab.teal{background:var(--teal);color:#fff}
+
+  /* ---------- controlli ---------- */
+  label{display:block;font-size:15px;color:var(--muted);margin:12px 0 6px;font-weight:500}
+  input[type=text],select{width:100%;padding:12px 14px;border-radius:14px;border:3px solid var(--ink);background:var(--white);color:var(--ink);font:500 18px "Fredoka",system-ui,sans-serif;outline:none;-webkit-appearance:none;appearance:none}
+  select{background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 22px) 52%,calc(100% - 15px) 52%;background-size:7px 7px;background-repeat:no-repeat;padding-right:40px}
+  input[type=text]:focus,select:focus{box-shadow:0 0 0 4px var(--mustard)}
+  input::placeholder{color:#b9a58c}
+  .code-input{text-transform:uppercase;letter-spacing:8px;font-weight:700 !important;text-align:center;font-size:24px !important}
+  button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:3px solid var(--ink);border-radius:16px;padding:12px 18px;font:600 18px "Fredoka",system-ui,sans-serif;cursor:pointer;background:var(--mustard);color:var(--ink);text-decoration:none;white-space:nowrap;box-shadow:0 4px 0 var(--ink);transition:transform .08s,box-shadow .08s;-webkit-tap-highlight-color:transparent}
+  button:active:not(:disabled),.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.sec,.btn.sec{background:var(--white)}
+  button.red{background:var(--tomato);color:#fff}
+  button.small{padding:6px 11px;font-size:15px;border-width:2.5px;border-radius:12px;box-shadow:0 3px 0 var(--ink)}
+  button.icon{padding:6px 9px;font-size:17px}
   .full{width:100%}
   .row{display:flex;gap:10px;align-items:center}
   .row > *{flex:1}
-  .or{display:flex;align-items:center;gap:10px;color:var(--muted);margin:18px 0}
-  .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
-  .players{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-  .pl{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:15px}
+  .or{display:flex;align-items:center;gap:10px;color:var(--muted);margin:18px 0;font-size:15px}
+  .or::before,.or::after{content:"";flex:1;border-top:2.5px dashed var(--line)}
+  .spacer{height:12px}
+  .grid2{display:grid;grid-template-columns:1fr;gap:0 10px}
+  @media (min-width:520px){.grid2{grid-template-columns:1fr 1fr}}
+
+  /* ---------- mascotte e fumetti ---------- */
+  .mascot{display:block;margin:0 auto}
+  .mascot svg{display:block;width:100%;height:auto;overflow:visible}
+  .bob{animation:bob 2.6s ease-in-out infinite}
+  .cheer{animation:cheer .5s ease-in-out infinite alternate}
+  .peek{animation:peek 1.8s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-7px) rotate(-2deg)}}
+  @keyframes cheer{from{transform:rotate(-7deg) translateY(0)}to{transform:rotate(7deg) translateY(-8px)}}
+  @keyframes peek{0%,100%{transform:rotate(0)}30%{transform:rotate(-6deg)}60%{transform:rotate(5deg)}}
+  .scene{display:flex;align-items:flex-end;gap:12px;justify-content:center;margin:4px 0 12px}
+  .scene .mascot{flex:0 0 auto}
+  .say{position:relative;background:var(--white);border:3px solid var(--ink);border-radius:18px;padding:10px 14px;font-weight:500;max-width:330px;margin-bottom:34px;box-shadow:3px 3px 0 var(--ink)}
+  .say::after{content:"";position:absolute;left:-13px;bottom:14px;width:18px;height:18px;background:var(--white);border-left:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:rotate(45deg) skew(10deg,10deg)}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}
+  .steps div{background:var(--white);border:2.5px solid var(--ink);border-radius:14px;padding:8px 6px;text-align:center;font-size:14px;line-height:1.25}
+  .steps b{display:block;font-size:24px;margin-bottom:2px}
+
+  /* ---------- giocatori e classifica ---------- */
+  .players{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .pl{background:var(--white);border:2.5px solid var(--ink);border-radius:999px;padding:5px 12px;font-size:15px;font-weight:500}
   .pl.off{opacity:.4}
-  .pl.done{border-color:var(--ok)}
+  .pl.done{background:#dcf1e2}
+  .pl.wait{border-style:dashed}
   .scores{list-style:none;margin:0;padding:0}
-  .scores li{display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--line)}
+  .scores li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 4px;border-bottom:2.5px dashed var(--line);font-weight:500}
   .scores li:last-child{border-bottom:0}
-  .scores li.off{opacity:.4}
-  .scores li{align-items:center}
-  .kick{padding:3px 9px !important;margin-left:8px;font-size:12px !important}
-  .scores b{color:var(--accent)}
-  .stage{position:relative;margin:0 auto;overflow:hidden;border-radius:14px;background:#000;border:2px solid var(--line);max-width:100%}
+  .scores li.off{opacity:.45}
+  .scores .pts{font-weight:700;font-size:19px}
+  .rank{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;border:2.5px solid var(--ink);border-radius:50%;background:var(--white);font-size:13px;font-weight:700;margin-right:6px;flex:0 0 auto}
+  .rank.g1{background:var(--mustard)} .rank.g2{background:#d9dde3} .rank.g3{background:#e7a774}
+  .kick{padding:2px 8px !important;margin-left:6px;font-size:12px !important;box-shadow:0 2px 0 var(--ink) !important}
+
+  /* ---------- immagine / lente ---------- */
+  .stage{position:relative;margin:0 auto;overflow:hidden;border-radius:20px;background:#2a211b;border:4px solid var(--ink);box-shadow:5px 5px 0 var(--ink);max-width:100%}
   .stage .img{position:absolute;inset:0;background-size:100% 100%;background-repeat:no-repeat;will-change:transform}
+  .stage .vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 52%,rgba(30,20,10,.5) 100%)}
   .stage.pick{cursor:crosshair}
-  .marker{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border:3px solid var(--accent);border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.5);pointer-events:none}
-  .marker::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;background:var(--accent);border-radius:50%}
-  .bar{height:10px;background:var(--card2);border-radius:999px;overflow:hidden;margin:12px 0 6px}
-  .bar > div{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));width:100%}
-  .stat{display:flex;justify-content:space-between;color:var(--muted);font-size:14px}
-  .stat b{color:var(--text)}
-  .big{font-size:96px;font-weight:900;text-align:center;color:var(--accent);line-height:1.1;margin:20px 0}
-  .guess{display:flex;gap:8px;margin-top:12px}
-  .guess input{flex:1}
+  .marker{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border:5px solid var(--mustard);border-radius:50%;box-shadow:0 0 0 3px var(--ink),inset 0 0 0 3px var(--ink);pointer-events:none;background:rgba(214,236,243,.25)}
+  .marker::after{content:"";position:absolute;right:-19px;bottom:-19px;width:20px;height:7px;background:var(--ink);border-radius:4px;transform:rotate(45deg)}
+  .bar{height:18px;background:var(--white);border:3px solid var(--ink);border-radius:999px;overflow:hidden;margin:16px 0 6px}
+  .bar > div{height:100%;background:var(--mustard);width:100%;border-right:3px solid var(--ink)}
+  .bar.low > div{background:var(--tomato)}
+  .stat{display:flex;justify-content:space-between;font-size:15px;color:var(--muted);font-weight:500}
+  .stat b{color:var(--ink);font-size:18px}
+  .turn{display:inline-block;font-family:var(--type);font-size:14px;background:var(--sky);border:2.5px solid var(--ink);border-radius:999px;padding:3px 11px;margin-bottom:12px}
+
+  .cdring{width:170px;height:170px;margin:18px auto;border-radius:50%;background:var(--sky);border:14px solid var(--mustard);box-shadow:0 0 0 4px var(--ink),inset 0 0 0 4px var(--ink),6px 6px 0 4px var(--ink);display:flex;align-items:center;justify-content:center;font-size:84px;font-weight:700;position:relative}
+  .pop{animation:pop .35s ease-out}
+  @keyframes pop{from{transform:scale(1.5);opacity:.3}to{transform:scale(1);opacity:1}}
+
+  .guess{display:flex;gap:8px;margin-top:14px}
+  .guess input{flex:1;min-width:0}
   .guess button{flex:0 0 auto}
-  .glist{list-style:none;margin:10px 0 0;padding:0}
-  .glist li{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
-  .glist .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-  .glist .txt{font-size:18px;font-weight:700;word-break:break-word}
-  .marks{display:flex;gap:6px;margin-top:8px}
-  .marks button{flex:1;background:var(--card);color:var(--text);border:2px solid var(--line);font-size:15px;padding:9px 6px}
-  .marks button.on.ok{border-color:var(--ok);background:rgba(60,207,122,.15)}
-  .marks button.on.near{border-color:var(--near);background:rgba(242,178,48,.15)}
-  .marks button.on.no{border-color:var(--no);background:rgba(229,86,107,.15)}
-  .pts{font-weight:800}
-  .pts.ok{color:var(--ok)} .pts.near{color:var(--near)} .pts.no{color:var(--no)}
-  .answer{font-size:22px;font-weight:800;color:var(--accent)}
-  .note{background:rgba(63,208,201,.08);border:1px solid rgba(63,208,201,.35);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}
-  .err{background:rgba(229,86,107,.12);border:1px solid var(--no);border-radius:12px;padding:10px 12px;margin-top:10px}
+
+  /* ---------- risposte e timbri ---------- */
+  .glist{list-style:none;margin:10px 0 14px;padding:0}
+  .glist li{position:relative;background:var(--white);border:2.5px solid var(--ink);border-radius:16px;padding:10px 12px;margin-bottom:10px}
+  .glist .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .glist .txt{font-size:19px;font-weight:600;word-break:break-word;margin-top:2px}
+  .marks{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+  .marks button{background:var(--white);font-size:14px;padding:8px 4px;border-width:2.5px;box-shadow:0 3px 0 var(--ink)}
+  .marks button.on.ok{background:#cdeed8}
+  .marks button.on.near{background:#fbe2b8}
+  .marks button.on.no{background:#f6cccc}
+  .stamp{display:inline-block;font-family:var(--type);text-transform:uppercase;border:3px double currentColor;padding:2px 8px;border-radius:6px;transform:rotate(-7deg);font-size:14px;letter-spacing:1px;background:rgba(255,255,255,.6);white-space:nowrap}
+  .stamp.ok{color:var(--ok)} .stamp.near{color:var(--near)} .stamp.no{color:var(--no)}
+  .stamp.big{font-size:22px;padding:4px 14px;border-width:4px}
+  .stamp-in{animation:stamp .4s cubic-bezier(.3,1.6,.6,1)}
+  @keyframes stamp{from{transform:scale(2.2) rotate(-14deg);opacity:0}to{transform:scale(1) rotate(-7deg);opacity:1}}
+  .gain{font-weight:700;font-size:18px}
+  .gain.ok{color:var(--ok)} .gain.near{color:var(--near)} .gain.no{color:var(--no)}
+  .answer{font-size:24px;font-weight:700;color:var(--tomato)}
+  .note{background:var(--sky);border:2.5px solid var(--ink);border-radius:14px;padding:10px 12px;font-size:15px;margin-top:12px}
+  .err{background:#f9d5d5;border:2.5px solid var(--no);border-radius:14px;padding:10px 12px;margin-top:12px}
   .file-btn{position:relative;overflow:hidden}
   .file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
   .two{display:grid;grid-template-columns:1fr;gap:12px}
   @media (min-width:640px){.two{grid-template-columns:2fr 1fr}}
-  .mini-title{font-size:13px;color:var(--muted);margin:0 0 6px}
-  .spacer{height:10px}
-  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line);padding:10px 16px;border-radius:12px;opacity:0;transition:opacity .2s;pointer-events:none}
-  .toast.show{opacity:1}
+  .mini-title{font-size:14px;color:var(--muted);margin:0 0 6px;font-weight:500}
+
+  /* ---------- podio finale ---------- */
+  .podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:16px 0 8px}
+  .podium .col{flex:1;max-width:150px;text-align:center}
+  .podium .who{font-weight:600;font-size:16px;word-break:break-word;margin-bottom:4px}
+  .podium .medal{font-size:30px;line-height:1}
+  .podium .block{border:3px solid var(--ink);border-radius:14px 14px 4px 4px;box-shadow:4px 4px 0 var(--ink);display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-weight:700;font-size:22px}
+  .podium .p1 .block{height:120px;background:var(--mustard)}
+  .podium .p2 .block{height:88px;background:#d9dde3}
+  .podium .p3 .block{height:64px;background:#e7a774}
+  .rise{animation:rise .6s ease-out both}
+  @keyframes rise{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--white);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:10px 16px;border-radius:14px;opacity:0;transition:all .2s;pointer-events:none;font-weight:500;max-width:90vw;text-align:center;z-index:20}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  canvas.confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:30}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>🔍 Zoom <span>Misterioso</span></h1>
-    <div class="row" id="hdr" style="flex:0 0 auto"></div>
+    <div class="brand">
+      <div class="logo"><div class="mascot" id="logoMascot"></div><h1>Zoom <span>Misterioso</span></h1></div>
+      <button class="sec small icon" id="muteBtn" onclick="toggleMute()" title="Suoni">🔊</button>
+    </div>
+    <div class="hbar" id="hdr"></div>
   </header>
   <div id="main"></div>
   <div id="side"></div>
@@ -144,8 +227,8 @@ let leaving = false;             // sto uscendo volontariamente
    HOST: logica di gioco
    ============================================================ */
 function hostInit(code){
-  G = { code, phase:"lobby", duration:30000, round:0, r:null,
-        players:[{ id:"host", name:me.name, score:0, online:true }] };
+  G = { code, phase:"lobby", duration:30000, giri:2, round:0, turnNo:0, r:null,
+        players:[{ id:"host", name:me.name, score:0, online:true, led:0 }] };
   me.id = "host"; me.isHost = true; me.code = code;
   broadcast();
 }
@@ -193,10 +276,10 @@ function hostHandover(){
   if (!heir || !heirEntry) return false;
   if (G.r) clearTimeout(G.r.timer);
   const snap = {
-    code:G.code, duration:G.duration, round:G.round,
-    phase: G.phase === "lobby" ? "lobby" : "playing",
+    code:G.code, duration:G.duration, giri:G.giri, round:G.round, turnNo:G.turnNo,
+    phase: G.phase === "lobby" || G.phase === "final" ? G.phase : "playing",
     players: G.players.filter(p => p.id !== "host").map(p => ({
-      id: p.id === heir.id ? "host" : p.id, name:p.name, score:p.score, online: p.id === heir.id
+      id: p.id === heir.id ? "host" : p.id, name:p.name, score:p.score, online: p.id === heir.id, led:p.led || 0
     }))
   };
   safeSend(heirEntry.conn, { type:"becomeHost", snap });
@@ -217,8 +300,10 @@ function becomeHost(snap){
     p.on("open", () => {
       peer = p; migrating = false;
       me.id = "host"; me.isHost = true; me.code = snap.code;
-      G = { code:snap.code, phase:"lobby", duration:snap.duration, round:snap.round, r:null, players:snap.players };
-      if (snap.phase !== "lobby") nextRound(true); else broadcast();
+      G = { code:snap.code, phase:"lobby", duration:snap.duration, giri:snap.giri || 2, round:snap.round,
+            turnNo:snap.turnNo || 0, r:null, players:snap.players };
+      if (snap.phase === "final"){ G.phase = "final"; broadcast(); }
+      else if (snap.phase !== "lobby") nextRound(true); else broadcast();
       toast("Ora sei tu l'host: tieni la pagina aperta!");
     });
     p.on("connection", hostOnConnection);
@@ -250,7 +335,7 @@ function hostOnData(conn, msg){
     if (!p){
       const base = name; let i = 2;
       while (G.players.some(x => x.name.toLowerCase() === name.toLowerCase())) name = base + " " + (i++);
-      p = { id:"p" + rid(), name, score:0, online:true };
+      p = { id:"p" + rid(), name, score:0, online:true, led:0 };
       G.players.push(p);
     }
     p.online = true;
@@ -281,10 +366,19 @@ function act(pid, msg){
   switch (msg.type){
     case "start":
       if (pid !== "host" || G.phase !== "lobby" || onlinePlayers().length < 2) return;
-      G.r = null; nextRound(true); return;
+      G.players = G.players.filter(p => p.online);
+      for (const p of G.players){ p.score = 0; p.led = 0; }
+      G.turnNo = 0; G.r = null; nextRound(true); return;
     case "duration":
       if (pid !== "host" || G.phase !== "lobby") return;
       G.duration = clamp(Number(msg.ms) || 30000, 10000, 90000); break;
+    case "giri":
+      if (pid !== "host" || G.phase !== "lobby") return;
+      G.giri = clamp(Math.round(Number(msg.n) || 1), 1, 5); break;
+    case "newGame":
+      if (pid !== "host" || G.phase !== "final") return;
+      for (const p of G.players){ p.score = 0; p.led = 0; }
+      G.turnNo = 0; G.r = null; G.phase = "lobby"; break;
     case "upload":
       if (G.phase !== "upload" || !r || r.leadId !== pid) return;
       if (typeof msg.image !== "string" || !msg.image.startsWith("data:image/")) return;
@@ -319,7 +413,7 @@ function act(pid, msg){
       if (G.phase !== "results" || !r || (pid !== r.leadId && pid !== "host")) return;
       nextRound(); return;
     case "skip":
-      if (pid !== "host" || G.phase === "lobby" || G.phase === "results") return;
+      if (pid !== "host" || ["lobby","results","final"].includes(G.phase)) return;
       nextRound(); return;
     case "leave":
       if (pid === "host") return;
@@ -334,18 +428,28 @@ function act(pid, msg){
 
 function onlinePlayers(){ return G.players.filter(p => p.online); }
 
+function remainingTurns(){
+  return onlinePlayers().reduce((a, p) => a + Math.max(0, G.giri - (p.led || 0)), 0);
+}
+
 function nextRound(first, fromIdx){
   if (G.r) clearTimeout(G.r.timer);
   const list = G.players;
+  const online = list.filter(p => p.online);
+  if (!online.length) return;
+  const minLed = Math.min(...online.map(p => p.led || 0));
+  if (minLed >= G.giri){ G.phase = "final"; G.r = null; broadcast(); return; }
   let idx = -1;
   if (fromIdx !== undefined) idx = fromIdx;
   else if (!first && G.r){ idx = list.findIndex(p => p.id === G.r.leadId); }
   let lead = null;
   for (let k = 1; k <= list.length; k++){
     const p = list[(idx + k + list.length) % list.length];
-    if (p.online){ lead = p; break; }
+    if (p.online && (p.led || 0) === minLed){ lead = p; break; }
   }
-  if (!lead) lead = list[0];
+  if (!lead) lead = online[0];
+  lead.led = (lead.led || 0) + 1;
+  G.turnNo = (G.turnNo || 0) + 1;
   G.round++;
   G.r = { n:G.round, leadId:lead.id, guesses:{}, marks:{}, points:{} };
   G.phase = "upload";
@@ -394,7 +498,9 @@ function viewFor(pid){
       guesses: ((isLead && G.phase === "judge") || reveal) ? guessList : null
     };
   }
+  const left = remainingTurns();
   return { code:G.code, phase:G.phase, you:pid, isHost:pid === "host", duration:G.duration,
+           giri:G.giri, turnNo:G.turnNo, totalTurns:G.turnNo + left, isLast: G.phase === "results" && left === 0,
            players:G.players.map(p => ({ id:p.id, name:p.name, score:p.score, online:p.online })), round };
 }
 
@@ -547,9 +653,121 @@ function send(msg){
 }
 
 /* ============================================================
+   MASCOTTE
+   ============================================================ */
+const MASCOTS = {"gufo": "<svg viewBox=\"0 0 200 220\" xmlns=\"http://www.w3.org/2000/svg\"><g stroke=\"#3b2a1e\" stroke-width=\"4\" stroke-linejoin=\"round\" stroke-linecap=\"round\">\n  <ellipse cx=\"82\" cy=\"203\" rx=\"14\" ry=\"7\" fill=\"#f2a33a\"/><ellipse cx=\"118\" cy=\"203\" rx=\"14\" ry=\"7\" fill=\"#f2a33a\"/>\n  <ellipse cx=\"100\" cy=\"132\" rx=\"64\" ry=\"70\" fill=\"#a8744a\"/>\n  <ellipse cx=\"100\" cy=\"152\" rx=\"40\" ry=\"44\" fill=\"#f3dfbf\"/>\n  <path d=\"M84 146 q5 6 10 0 M106 146 q5 6 10 0 M95 162 q5 6 10 0 M84 178 q5 6 10 0 M106 178 q5 6 10 0\" fill=\"none\" stroke-width=\"3\"/>\n  <path d=\"M40 124 q-16 32 6 62 q14 -22 8 -58 Z\" fill=\"#8c5d38\"/>\n  <path d=\"M46 84 l-14 -20 l24 10 Z\" fill=\"#8c5d38\"/><path d=\"M154 84 l14 -20 l-24 10 Z\" fill=\"#8c5d38\"/>\n  <circle cx=\"76\" cy=\"110\" r=\"25\" fill=\"#d9b48a\"/><circle cx=\"124\" cy=\"110\" r=\"25\" fill=\"#d9b48a\"/>\n  <circle cx=\"76\" cy=\"110\" r=\"15\" fill=\"#fff\"/><circle cx=\"79\" cy=\"112\" r=\"7.5\" fill=\"#3b2a1e\" stroke=\"none\"/><circle cx=\"82\" cy=\"108\" r=\"2.8\" fill=\"#fff\" stroke=\"none\"/>\n  <circle cx=\"124\" cy=\"108\" r=\"23\" fill=\"#fff\"/><circle cx=\"128\" cy=\"111\" r=\"12\" fill=\"#3b2a1e\" stroke=\"none\"/><circle cx=\"133\" cy=\"105\" r=\"4.5\" fill=\"#fff\" stroke=\"none\"/>\n  <path d=\"M92 128 L108 128 L100 141 Z\" fill=\"#f2a33a\"/>\n  \n  <defs><clipPath id=\"hc1\"><path d=\"M44 84 Q100 14 156 84 Z\"/></clipPath></defs>\n  <path d=\"M44 84 Q100 14 156 84 Z\" fill=\"#c99a5b\"/>\n  <g clip-path=\"url(#hc1)\" stroke=\"#9c6d36\" stroke-width=\"3\" opacity=\".75\"><path d=\"M54 9 L54 86 M69 9 L69 86 M84 9 L84 86 M99 9 L99 86 M114 9 L114 86 M129 9 L129 86 M144 9 L144 86\"/><path d=\"M44 32 L156 32 M44 45 L156 45 M44 58 L156 58 M44 71 L156 71\"/></g>\n  <path d=\"M44 84 Q100 14 156 84 Z\" fill=\"none\"/>\n  <path d=\"M36 84 Q100 100 164 84 Q100 76 36 84 Z\" fill=\"#b5844a\"/>\n  <path d=\"M78 89 Q100 106 122 89\" fill=\"#a0713c\"/>\n  <path d=\"M100 46 q-16 -14 -18 -2 q2 10 18 2 q16 -14 18 -2 q-2 10 -18 2 Z\" fill=\"#e4572e\" stroke-width=\"3\"/>\n  <circle cx=\"100\" cy=\"46\" r=\"3.5\" fill=\"#e4572e\" stroke-width=\"3\"/>\n  \n  <line x1=\"144\" y1=\"130\" x2=\"170\" y2=\"166\" stroke=\"#3b2a1e\" stroke-width=\"16\"/>\n  <line x1=\"144\" y1=\"130\" x2=\"170\" y2=\"166\" stroke=\"#7a4a2a\" stroke-width=\"8\"/>\n  <circle cx=\"124\" cy=\"108\" r=\"30\" fill=\"rgba(170,215,255,0.33)\" stroke=\"#3b2a1e\" stroke-width=\"13\"/>\n  <circle cx=\"124\" cy=\"108\" r=\"30\" fill=\"none\" stroke=\"#f2b632\" stroke-width=\"6\"/>\n  <path d=\"M106 96 Q112 86 124 85\" fill=\"none\" stroke=\"#fff\" stroke-width=\"4\" opacity=\".9\"/>\n  <path d=\"M150 124 q30 18 24 54 q-20 -4 -26 -30 Z\" fill=\"#8c5d38\"/>\n</g></svg>", "carlino": "<svg viewBox=\"0 0 200 220\" xmlns=\"http://www.w3.org/2000/svg\"><g stroke=\"#3b2a1e\" stroke-width=\"4\" stroke-linejoin=\"round\" stroke-linecap=\"round\">\n  <path d=\"M46 222 Q48 164 100 160 Q152 164 154 222 Z\" fill=\"#e3bf8f\"/>\n  <path d=\"M40 82 q-26 6 -20 40 q16 -6 28 -24 Z\" fill=\"#4a3628\"/><path d=\"M160 82 q26 6 20 40 q-16 -6 -28 -24 Z\" fill=\"#4a3628\"/>\n  <ellipse cx=\"100\" cy=\"116\" rx=\"64\" ry=\"56\" fill=\"#ecca9c\"/>\n  <path d=\"M84 92 q16 -9 32 0 M89 101 q11 -6 22 0\" fill=\"none\" stroke-width=\"3\"/>\n  <ellipse cx=\"100\" cy=\"142\" rx=\"34\" ry=\"25\" fill=\"#4a3628\"/>\n  <path d=\"M95 152 q5 14 10 0 Z\" fill=\"#ef7b8a\" stroke-width=\"3\"/>\n  <path d=\"M100 136 v9 M100 145 q-8 8 -15 2 M100 145 q8 8 15 2\" fill=\"none\" stroke=\"#1e1510\" stroke-width=\"3\"/>\n  <ellipse cx=\"100\" cy=\"131\" rx=\"11\" ry=\"7.5\" fill=\"#1e1510\" stroke=\"none\"/>\n  <circle cx=\"72\" cy=\"112\" r=\"12\" fill=\"#2a1d14\"/><circle cx=\"76\" cy=\"108\" r=\"4\" fill=\"#fff\" stroke=\"none\"/>\n  <circle cx=\"128\" cy=\"110\" r=\"21\" fill=\"#2a1d14\"/><circle cx=\"135\" cy=\"102\" r=\"7\" fill=\"#fff\" stroke=\"none\"/><circle cx=\"122\" cy=\"118\" r=\"3\" fill=\"#fff\" stroke=\"none\"/>\n  \n  <defs><clipPath id=\"hc2\"><path d=\"M40 80 Q100 8 160 80 Z\"/></clipPath></defs>\n  <path d=\"M40 80 Q100 8 160 80 Z\" fill=\"#c99a5b\"/>\n  <g clip-path=\"url(#hc2)\" stroke=\"#9c6d36\" stroke-width=\"3\" opacity=\".75\"><path d=\"M50 3 L50 82 M65 3 L65 82 M80 3 L80 82 M95 3 L95 82 M110 3 L110 82 M125 3 L125 82 M140 3 L140 82 M155 3 L155 82\"/><path d=\"M40 26 L160 26 M40 39 L160 39 M40 52 L160 52 M40 65 L160 65 M40 78 L160 78\"/></g>\n  <path d=\"M40 80 Q100 8 160 80 Z\" fill=\"none\"/>\n  <path d=\"M32 80 Q100 96 168 80 Q100 72 32 80 Z\" fill=\"#b5844a\"/>\n  <path d=\"M78 85 Q100 102 122 85\" fill=\"#a0713c\"/>\n  <path d=\"M100 41 q-16 -14 -18 -2 q2 10 18 2 q16 -14 18 -2 q-2 10 -18 2 Z\" fill=\"#e4572e\" stroke-width=\"3\"/>\n  <circle cx=\"100\" cy=\"41\" r=\"3.5\" fill=\"#e4572e\" stroke-width=\"3\"/>\n  \n  <line x1=\"148\" y1=\"132\" x2=\"166\" y2=\"170\" stroke=\"#3b2a1e\" stroke-width=\"16\"/>\n  <line x1=\"148\" y1=\"132\" x2=\"166\" y2=\"170\" stroke=\"#7a4a2a\" stroke-width=\"8\"/>\n  <circle cx=\"128\" cy=\"110\" r=\"30\" fill=\"rgba(170,215,255,0.33)\" stroke=\"#3b2a1e\" stroke-width=\"13\"/>\n  <circle cx=\"128\" cy=\"110\" r=\"30\" fill=\"none\" stroke=\"#f2b632\" stroke-width=\"6\"/>\n  <path d=\"M110 98 Q116 88 128 87\" fill=\"none\" stroke=\"#fff\" stroke-width=\"4\" opacity=\".9\"/>\n  <ellipse cx=\"166\" cy=\"172\" rx=\"15\" ry=\"12\" fill=\"#ecca9c\"/><path d=\"M160 179 v-5 M167 180 v-5\" fill=\"none\" stroke-width=\"3\"/>\n</g></svg>", "procione": "<svg viewBox=\"0 0 200 220\" xmlns=\"http://www.w3.org/2000/svg\"><g stroke=\"#3b2a1e\" stroke-width=\"4\" stroke-linejoin=\"round\" stroke-linecap=\"round\">\n  <path d=\"M138 206 Q196 196 190 132 Q186 120 174 124 Q178 176 130 186 Z\" fill=\"#8d8f96\"/>\n  <path d=\"M182 150 q-10 2 -16 -2 M176 172 q-10 0 -15 -6 M158 188 q-6 -4 -8 -10\" fill=\"none\" stroke=\"#3b2a1e\" stroke-width=\"8\"/>\n  <path d=\"M46 222 Q48 164 100 160 Q152 164 154 222 Z\" fill=\"#9a9ca3\"/>\n  <path d=\"M74 222 Q76 186 100 184 Q124 186 126 222 Z\" fill=\"#e9e5dc\"/>\n  <path d=\"M46 86 l-12 -24 l26 12 Z\" fill=\"#6f7178\"/><path d=\"M154 86 l12 -24 l-26 12 Z\" fill=\"#6f7178\"/>\n  <path d=\"M30 116 Q38 66 100 64 Q162 66 170 116 Q154 164 100 166 Q46 164 30 116 Z\" fill=\"#9a9ca3\"/>\n  <path d=\"M54 130 Q100 176 146 130 Q132 156 100 160 Q68 156 54 130 Z\" fill=\"#f4f1ea\"/>\n  <path d=\"M36 110 Q60 90 88 104 Q100 112 112 104 Q140 90 164 110 Q154 132 126 130 Q108 128 100 120 Q92 128 74 130 Q46 132 36 110 Z\" fill=\"#2e2c33\"/>\n  <circle cx=\"72\" cy=\"112\" r=\"9\" fill=\"#fff\"/><circle cx=\"74\" cy=\"113\" r=\"5\" fill=\"#2e2c33\" stroke=\"none\"/><circle cx=\"76\" cy=\"110\" r=\"2\" fill=\"#fff\" stroke=\"none\"/>\n  <circle cx=\"128\" cy=\"110\" r=\"17\" fill=\"#fff\"/><circle cx=\"131\" cy=\"112\" r=\"9\" fill=\"#2e2c33\" stroke=\"none\"/><circle cx=\"135\" cy=\"107\" r=\"3.5\" fill=\"#fff\" stroke=\"none\"/>\n  <ellipse cx=\"100\" cy=\"138\" rx=\"10\" ry=\"7\" fill=\"#1e1510\"/>\n  <path d=\"M100 145 q-8 8 -15 2 M100 145 q8 8 15 2\" fill=\"none\" stroke=\"#1e1510\" stroke-width=\"3\"/>\n  \n  <defs><clipPath id=\"hc3\"><path d=\"M42 82 Q100 10 158 82 Z\"/></clipPath></defs>\n  <path d=\"M42 82 Q100 10 158 82 Z\" fill=\"#c99a5b\"/>\n  <g clip-path=\"url(#hc3)\" stroke=\"#9c6d36\" stroke-width=\"3\" opacity=\".75\"><path d=\"M52 5 L52 84 M67 5 L67 84 M82 5 L82 84 M97 5 L97 84 M112 5 L112 84 M127 5 L127 84 M142 5 L142 84 M157 5 L157 84\"/><path d=\"M42 28 L158 28 M42 41 L158 41 M42 54 L158 54 M42 67 L158 67 M42 80 L158 80\"/></g>\n  <path d=\"M42 82 Q100 10 158 82 Z\" fill=\"none\"/>\n  <path d=\"M34 82 Q100 98 166 82 Q100 74 34 82 Z\" fill=\"#b5844a\"/>\n  <path d=\"M78 87 Q100 104 122 87\" fill=\"#a0713c\"/>\n  <path d=\"M100 43 q-16 -14 -18 -2 q2 10 18 2 q16 -14 18 -2 q-2 10 -18 2 Z\" fill=\"#e4572e\" stroke-width=\"3\"/>\n  <circle cx=\"100\" cy=\"43\" r=\"3.5\" fill=\"#e4572e\" stroke-width=\"3\"/>\n  \n  <line x1=\"148\" y1=\"132\" x2=\"166\" y2=\"170\" stroke=\"#3b2a1e\" stroke-width=\"16\"/>\n  <line x1=\"148\" y1=\"132\" x2=\"166\" y2=\"170\" stroke=\"#7a4a2a\" stroke-width=\"8\"/>\n  <circle cx=\"128\" cy=\"110\" r=\"30\" fill=\"rgba(170,215,255,0.33)\" stroke=\"#3b2a1e\" stroke-width=\"13\"/>\n  <circle cx=\"128\" cy=\"110\" r=\"30\" fill=\"none\" stroke=\"#f2b632\" stroke-width=\"6\"/>\n  <path d=\"M110 98 Q116 88 128 87\" fill=\"none\" stroke=\"#fff\" stroke-width=\"4\" opacity=\".9\"/>\n  <ellipse cx=\"166\" cy=\"172\" rx=\"14\" ry=\"11\" fill=\"#6f7178\"/>\n</g></svg>"};
+const MASCOT_CHOICE = "gufo";
+function mascot(size, cls = ""){
+  return `<div class="mascot ${cls}" style="width:${size}px">${MASCOTS[MASCOT_CHOICE] || ""}</div>`;
+}
+function scene(size, cls, text){
+  return `<div class="scene">${mascot(size, cls)}<div class="say">${text}</div></div>`;
+}
+
+/* ============================================================
+   SUONI (generati al volo, niente file)
+   ============================================================ */
+const sfx = (() => {
+  let ctx = null, muted = store("zm-mute") === "1";
+  function ac(){
+    if (!ctx){ const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; ctx = new C(); }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+  function tone(freq, dur, { type = "sine", vol = .18, at = 0, slide = null } = {}){
+    if (muted) return;
+    const c = ac(); if (!c) return;
+    try{
+      const t0 = c.currentTime + at, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t0);
+      if (slide) o.frequency.exponentialRampToValueAtTime(slide, t0 + dur);
+      g.gain.setValueAtTime(.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + .015);
+      g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(t0); o.stop(t0 + dur + .03);
+    }catch(e){}
+  }
+  const seq = (fs, step, opt = {}) => fs.forEach((f, i) => tone(f, step * 1.7, { ...opt, at:(opt.at || 0) + i * step }));
+  return {
+    unlock(){ if (!muted) ac(); },
+    get muted(){ return muted; },
+    toggle(){ muted = !muted; store("zm-mute", muted ? "1" : "0"); if (!muted) seq([660, 990], .07, { type:"triangle", vol:.15 }); return muted; },
+    tick(){ tone(1500, .05, { type:"square", vol:.05 }); },
+    beep(){ tone(660, .16, { type:"triangle", vol:.2 }); },
+    go(){ tone(990, .4, { type:"triangle", vol:.22, slide:1320 }); },
+    ding(){ seq([988, 1319], .08, { type:"triangle", vol:.12 }); },
+    send(){ tone(440, .14, { type:"sine", vol:.22, slide:880 }); },
+    join(){ seq([660, 990], .07, { type:"sine", vol:.14 }); },
+    yourTurn(){ seq([523, 659, 784], .1, { type:"triangle", vol:.16 }); },
+    timeup(){ seq([784, 587, 392], .12, { type:"square", vol:.06 }); },
+    win(){ seq([523, 659, 784, 1047], .1, { type:"triangle", vol:.2 }); },
+    near(){ seq([659, 784], .13, { type:"triangle", vol:.16 }); },
+    fail(){ tone(392, .55, { type:"sawtooth", vol:.07, slide:180 }); },
+    reveal(){ seq([587, 784], .12, { type:"triangle", vol:.14 }); },
+    fanfare(){
+      seq([523, 523, 523, 659, 784, 659, 784, 1047], .13, { type:"triangle", vol:.2 });
+      [523, 659, 784, 1047].forEach(f => tone(f, 1.4, { type:"triangle", vol:.08, at:1.15 }));
+    }
+  };
+})();
+document.addEventListener("pointerdown", () => sfx.unlock(), { passive:true });
+function toggleMute(){ const m = sfx.toggle(); $("#muteBtn").textContent = m ? "🔇" : "🔊"; }
+
+/* ============================================================
+   CORIANDOLI
+   ============================================================ */
+const confetti = (() => {
+  let cv = null, cx = null, parts = [], running = false;
+  const colors = ["#f2b632", "#e4572e", "#2a9d8f", "#2f9a58", "#7bb6e8", "#f08bb0", "#3b2a1e"];
+  function setup(){
+    if (cv) return;
+    cv = document.createElement("canvas"); cv.className = "confetti"; document.body.appendChild(cv);
+    cx = cv.getContext("2d"); resize(); addEventListener("resize", resize);
+  }
+  function resize(){ if (cv){ cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; } }
+  function burst(n = 120, fromTop = false){
+    setup();
+    const W = innerWidth, H = innerHeight;
+    for (let i = 0; i < n; i++){
+      parts.push({
+        x: fromTop ? Math.random() * W : W / 2 + (Math.random() - .5) * 60,
+        y: fromTop ? -20 - Math.random() * H * .4 : H * .5,
+        vx: fromTop ? (Math.random() - .5) * 3 : (Math.random() - .5) * 16,
+        vy: fromTop ? Math.random() * 2 + 1 : -Math.random() * 15 - 5,
+        r: Math.random() * Math.PI, vr: (Math.random() - .5) * .3,
+        w: 7 + Math.random() * 6, h: 9 + Math.random() * 8,
+        c: colors[(Math.random() * colors.length) | 0], t: Math.random() * 10, life: 0
+      });
+    }
+    if (!running){ running = true; requestAnimationFrame(step); }
+  }
+  function step(){
+    const d = devicePixelRatio;
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(p => p.y < innerHeight + 40 && p.life < 700);
+    for (const p of parts){
+      p.vy = Math.min(p.vy + .28, 5.5); p.vx *= .985;
+      p.x += p.vx + Math.sin((p.life + p.t) * .08) * .6; p.y += p.vy; p.r += p.vr; p.life++;
+      const flip = Math.abs(Math.cos((p.life + p.t) * .12));
+      cx.save(); cx.translate(p.x * d, p.y * d); cx.rotate(p.r);
+      cx.fillStyle = p.c; cx.fillRect(-p.w * d / 2, -p.h * d * flip / 2, p.w * d, p.h * d * flip + 1);
+      cx.restore();
+    }
+    if (parts.length) requestAnimationFrame(step);
+    else { running = false; cx.clearRect(0, 0, cv.width, cv.height); }
+  }
+  return {
+    small(){ burst(70); },
+    big(){ burst(130); setTimeout(() => burst(150, true), 400); setTimeout(() => burst(120, true), 1400); }
+  };
+})();
+
+/* ============================================================
    VISTA
    ============================================================ */
 function applyView(v){
+  const prev = V;
   V = v;
   const r = v.round;
   if (v.phase === "zoom" && r){
@@ -560,7 +778,29 @@ function applyView(v){
     const key = "c" + r.n, end = performance.now() + r.countdownLeft;
     if (cdAnchor.key !== key || Math.abs(cdAnchor.end - end) > 400) cdAnchor = { key, end };
   }
+  try{ playEvents(prev, v); }catch(e){ console.warn(e); }
   render();
+}
+
+function playEvents(prev, v){
+  if (!prev || !prev.players) return;
+  const r = v.round, pr = prev.round;
+  const onl = x => x.players.filter(p => p.online).length;
+  if (v.phase === "lobby" && prev.phase === "lobby" && onl(v) > onl(prev)) sfx.join();
+  if (v.phase === "upload" && r && r.leadId === v.you && !(prev.phase === "upload" && pr && pr.n === r.n)) sfx.yourTurn();
+  if (v.phase === "zoom" && prev.phase === "countdown") sfx.go();
+  if (v.phase === "zoom" && r && pr && pr.n === r.n && r.guessed.length > pr.guessed.length){
+    if (r.myGuess && !pr.myGuess) sfx.send(); else sfx.ding();
+  }
+  if (v.phase === "judge" && prev.phase === "zoom") sfx.timeup();
+  if (v.phase === "results" && prev.phase !== "results" && r){
+    const mine = (r.guesses || []).find(g => g.id === v.you);
+    if (mine && mine.mark === "ok"){ sfx.win(); confetti.small(); }
+    else if (mine && mine.mark === "near") sfx.near();
+    else if (mine) sfx.fail();
+    else sfx.reveal();
+  }
+  if (v.phase === "final" && prev.phase !== "final"){ sfx.fanfare(); confetti.big(); }
 }
 
 const playerName = id => (V.players.find(p => p.id === id) || {}).name || "?";
@@ -575,9 +815,10 @@ function render(){
 }
 
 function header(){
-  if (!V || ["left","lost","migrating"].includes(V.phase)){ $("#hdr").innerHTML = ""; return; }
-  $("#hdr").innerHTML = `<span class="chip" title="Codice stanza">${esc(V.code)}</span>
-    <button class="sec small" onclick="copyLink()">🔗 Copia link</button>
+  const hdr = $("#hdr");
+  if (!V || ["left","lost","migrating"].includes(V.phase)){ hdr.innerHTML = ""; return; }
+  hdr.innerHTML = `<span class="chip" title="Codice stanza">CASO #<b id="roomCode">${esc(V.code)}</b></span>
+    <button class="sec small" onclick="copyLink()">🔗 Invita</button>
     <button class="sec small" onclick="leaveGame()">🚪 Esci</button>`;
 }
 
@@ -602,107 +843,139 @@ function renderHome(){
   const prevCode = ($("#code") && $("#code").value) || preCode;
   const joinFirst = !!preCode;
   const joinBox = `
-    <label for="code">Codice stanza</label>
+    <label for="code">Codice del caso</label>
     <input id="code" class="code-input" type="text" maxlength="4" autocomplete="off" value="${esc(prevCode)}" placeholder="ABCD">
     <div class="spacer"></div>
-    <button class="full ${joinFirst ? "" : "sec"}" onclick="joinGame()" ${connecting ? "disabled" : ""}>Entra nella partita</button>`;
-  const createBox = `<button class="full ${joinFirst ? "sec" : ""}" onclick="createGame()" ${connecting ? "disabled" : ""}>Crea una nuova partita</button>`;
+    <button class="full ${joinFirst ? "" : "sec"}" onclick="joinGame()" ${connecting ? "disabled" : ""}>🔍 Entra nella partita</button>`;
+  const createBox = `<button class="full ${joinFirst ? "sec" : ""}" onclick="createGame()" ${connecting ? "disabled" : ""}>✨ Crea una nuova partita</button>`;
   $("#main").innerHTML = `
     <div class="card">
-      <h2>Benvenuto!</h2>
-      <p class="muted" style="margin-top:0">A turno, un giocatore carica una foto: tutti la vedono partire super ingrandita e allargarsi piano piano. Chi indovina prima cos'è, vince più punti.</p>
-      <label for="name">Il tuo nome</label>
+      ${scene(130, "bob", joinFirst ? "Ti hanno invitato a un caso! Scrivi il tuo nome ed entra 🕵️" : "Ciao detective! Pronto a scoprire cosa si nasconde dietro un dettaglio?")}
+      <div class="steps">
+        <div><b>📷</b>A turno qualcuno sceglie una foto</div>
+        <div><b>🔍</b>Parte super ingrandita e si allarga</div>
+        <div><b>🏆</b>Chi indovina prima fa più punti</div>
+      </div>
+      <label for="name">Il tuo nome da detective</label>
       <input id="name" type="text" maxlength="20" autocomplete="off" value="${esc(prevName)}" placeholder="Es. Giulia">
       <div class="spacer"></div>
       ${joinFirst ? joinBox + `<div class="or">oppure</div>` + createBox : createBox + `<div class="or">oppure entra con un codice</div>` + joinBox}
-      ${connecting ? `<p class="center muted">Connessione in corso…</p>` : ""}
+      ${connecting ? `<p class="center muted" style="margin-top:12px">Connessione in corso…</p>` : ""}
       ${homeError ? `<div class="err">${esc(homeError)}</div>` : ""}
     </div>`;
-  const codeEl = $("#code");
-  codeEl.addEventListener("keydown", e => { if (e.key === "Enter") joinGame(); });
+  $("#code").addEventListener("keydown", e => { if (e.key === "Enter") joinGame(); });
 }
 
 /* ---------- Schermate di gioco ---------- */
+function turnPill(){
+  return V.turnNo ? `<span class="turn">Turno ${V.turnNo} di ${Math.max(V.turnNo, V.totalTurns)}</span>` : "";
+}
+function giriLabel(n, players){
+  return `${n} ${n === 1 ? "giro" : "giri"} · ${n * Math.max(players, 1)} turni`;
+}
+
 function buildScreen(){
   header();
   const r = V.round;
   const isLead = !!r && r.leadId === V.you;
   const lead = r ? esc(playerName(r.leadId)) : "";
   const hostSkip = (V.isHost && !isLead && ["upload","countdown","zoom","judge"].includes(V.phase))
-      ? `<div class="spacer"></div><button class="sec small" onclick="if(confirm('Saltare questo turno?')) send({type:'skip'})">⏭ Salta turno (host)</button>` : "";
+      ? `<div class="spacer"></div><div class="center"><button class="sec small" onclick="if(confirm('Saltare questo turno?')) send({type:'skip'})">⏭ Salta turno (host)</button></div>` : "";
   let html = "";
 
   switch (V.phase){
     case "left":
-      html = `<div class="card center"><h2>${V.kicked ? "Sei stato tolto dalla partita" : "Sei uscito dalla partita 👋"}</h2>
-        <p class="muted">${V.kicked ? "L'host ti ha rimosso." : "Gli altri possono continuare a giocare senza di te."}</p>
+      html = `<div class="card center">
+        ${scene(110, "peek", V.kicked ? "L'host ti ha tolto dalla partita." : "A presto, detective! 👋")}
+        <h2>${V.kicked ? "Sei stato tolto dalla partita" : "Sei uscito dalla partita"}</h2>
+        <p class="muted">${V.kicked ? "Puoi sempre crearne una nuova." : "Gli altri possono continuare a giocare senza di te."}</p>
         ${V.code && !me.isHost && !V.kicked ? `<button onclick="reconnect()">↩️ Rientra nella stanza ${esc(V.code)}</button><div class="spacer"></div>` : ""}
         <button class="sec" onclick="goHome()">Torna all'inizio</button></div>`;
       break;
 
     case "migrating":
-      html = `<div class="card center"><h2>🔄 Cambio host…</h2>
+      html = `<div class="card center">
+        ${scene(110, "peek", V.newHost === "te" ? "Ora il capo della squadra sei tu!" : "Un attimo, cambio di comando…")}
+        <h2>🔄 Cambio host…</h2>
         <p class="muted">${V.newHost === "te" ? "L'host è uscito e <b>ora sei tu l'host</b>. Sto riaprendo la stanza: tieni questa pagina aperta!" : `L'host è uscito: <b>${esc(V.newHost)}</b> diventa il nuovo host. Mi ricollego in automatico, i punti restano.`}</p></div>`;
       break;
 
     case "lost":
-      html = `<div class="card center"><h2>Connessione persa 😕</h2>
+      html = `<div class="card center">
+        ${scene(110, "peek", "Ehi… dove sono finiti tutti?")}
+        <h2>Connessione persa 😕</h2>
         <p class="muted">Non sei più collegato all'host. Se la sua pagina è ancora aperta puoi rientrare: il punteggio resta tuo.</p>
         <button onclick="reconnect()">🔄 Riconnetti</button></div>`;
       break;
 
-    case "lobby":
-      html = `<div class="card">
-        <h2>Sala d'attesa</h2>
+    case "lobby": {
+      const n = V.players.filter(p => p.online).length;
+      html = `<div class="card tabbed"><div class="tab">SALA D'ATTESA</div>
         ${V.isHost
-          ? `<p>Condividi il codice <span class="chip">${esc(V.code)}</span> oppure il link nella chat di Meet.</p>
-             <button class="sec" onclick="copyLink()">🔗 Copia link di invito</button>`
-          : `<p class="muted">Sei dentro! Aspetta che l'host faccia iniziare la partita.</p>`}
-        <label>Giocatori collegati</label>
+          ? `${scene(90, "bob", `Invita la squadra! Codice <b>${esc(V.code)}</b> o il link nella chat di Meet.`)}
+             <button class="sec full" onclick="copyLink()">🔗 Copia link di invito</button>`
+          : scene(90, "bob", "Sei dentro! Aspettiamo che l'host faccia partire il caso…")}
+        <label>Detective collegati</label>
         <div class="players" id="lobbyPlayers"></div>
         ${V.isHost ? `
-          <label for="dur">Durata dello zoom</label>
-          <select id="dur" onchange="send({type:'duration', ms:Number(this.value)})">
-            ${[20,30,45,60].map(s => `<option value="${s*1000}" ${V.duration === s*1000 ? "selected" : ""}>${s} secondi</option>`).join("")}
-          </select>
+          <div class="grid2">
+            <div><label for="giri">Giri della partita</label>
+              <select id="giri" onchange="send({type:'giri', n:Number(this.value)})">
+                ${[1,2,3,4,5].map(g => `<option value="${g}" ${V.giri === g ? "selected" : ""}>${giriLabel(g, n)}</option>`).join("")}
+              </select></div>
+            <div><label for="dur">Durata dello zoom</label>
+              <select id="dur" onchange="send({type:'duration', ms:Number(this.value)})">
+                ${[20,30,45,60].map(s => `<option value="${s*1000}" ${V.duration === s*1000 ? "selected" : ""}>${s} secondi</option>`).join("")}
+              </select></div>
+          </div>
+          <p class="muted" style="font-size:14px;margin:8px 0 0">In un giro ognuno sceglie un'immagine una volta.</p>
           <div class="spacer"></div>
           <button class="full" id="startBtn" onclick="send({type:'start'})">▶ Inizia partita</button>
-          <p class="muted center" id="startHint" style="font-size:14px"></p>` : ""}
+          <p class="muted center" id="startHint" style="font-size:14px;margin:10px 0 0"></p>`
+        : `<p class="muted center" id="settingsInfo" style="margin-top:14px"></p>`}
       </div>`;
       break;
+    }
 
     case "upload":
       if (isLead){
-        html = `<div class="card">
+        html = `<div class="card tabbed"><div class="tab red">IL TUO TURNO</div>
+          ${turnPill()}
           <h2>🎨 Tocca a te!</h2>
-          <p class="muted" style="margin-top:0">Scegli una foto, poi tocca il punto da cui partirà lo zoom: più è strano il dettaglio, più sarà difficile.</p>
-          <div class="btn file-btn sec full" style="background:var(--card2);color:var(--text);border:1px solid var(--line)">📷 ${draft ? "Cambia immagine" : "Scegli immagine"}
+          <p class="muted">Scegli una foto, poi tocca il punto da cui partirà lo zoom: più il dettaglio è strano, più sarà difficile.</p>
+          <div class="btn file-btn sec full">📷 ${draft ? "Cambia immagine" : "Scegli immagine"}
             <input type="file" accept="image/*" onchange="pickFile(this)"></div>
           <div id="draftArea"></div>
         </div>`;
       } else {
-        html = `<div class="card center"><h2>⏳ ${lead} sta scegliendo un'immagine…</h2>
-          <p class="muted">Tieniti pronto: appena parte, scrivi la tua risposta il prima possibile.</p>${hostSkip}</div>`;
+        html = `<div class="card center">
+          ${turnPill()}
+          ${scene(110, "peek", `Shh… <b>${lead}</b> sta nascondendo un indizio!`)}
+          <h2>⏳ ${lead} sta scegliendo un'immagine…</h2>
+          <p class="muted">Tieniti pronto: appena parte, scrivi la tua ipotesi il prima possibile.</p>${hostSkip}</div>`;
       }
       break;
 
     case "countdown":
-      html = `<div class="card center"><h2>Preparati!</h2>
+      html = `<div class="card center">
+        ${turnPill()}
+        <h2>Preparati, detective!</h2>
         <p class="muted">Immagine di <b>${lead}</b></p>
-        <div class="big" id="cd">3</div>
+        <div class="cdring" id="cd">3</div>
         ${!images[r.n] ? `<p class="muted">Sto ricevendo l'immagine…</p>` : ""}${hostSkip}</div>`;
       break;
 
     case "zoom": {
       const canGuess = !isLead && !r.myGuess;
       html = `<div class="card">
-        ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div></div>` : `<p class="center muted">Sto ricevendo l'immagine…</p>`}
-        <div class="bar"><div id="bar"></div></div>
-        <div class="stat"><span>Tempo: <b id="tleft">–</b></span><span>${isLead ? "" : `Punti in palio: <b id="pnow">100</b>`}</span></div>
-        ${canGuess ? `<div class="guess"><input id="gin" type="text" maxlength="60" autocomplete="off" placeholder="Cos'è?">
+        <div class="row" style="justify-content:space-between">${turnPill()}<span class="muted" style="flex:0 0 auto;margin-bottom:12px;font-size:15px">Immagine di <b>${lead}</b></span></div>
+        ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div><div class="vignette"></div></div>` : `<p class="center muted">Sto ricevendo l'immagine…</p>`}
+        <div class="bar" id="barWrap"><div id="bar"></div></div>
+        <div class="stat"><span>⏱ <b id="tleft">–</b></span><span>${isLead ? "" : `Punti in palio: <b id="pnow">100</b>`}</span></div>
+        ${canGuess ? `<div class="guess"><input id="gin" type="text" maxlength="60" autocomplete="off" placeholder="La tua ipotesi…">
           <button onclick="sendGuess()">Invia</button></div>
-          <p class="muted" style="font-size:13px;margin:6px 0 0">Hai una sola risposta: rispondi presto per fare più punti!</p>` : ""}
-        ${r.myGuess ? `<div class="note">Hai risposto <b>“${esc(r.myGuess.text)}”</b> dopo ${secs(r.myGuess.t)}. Ora aspetta gli altri…</div>` : ""}
+          <p class="muted" style="font-size:14px;margin:8px 0 0">Una sola risposta: più sei veloce, più punti fai!</p>` : ""}
+        ${r.myGuess ? `<div class="note">🕵️ Hai risposto <b>“${esc(r.myGuess.text)}”</b> dopo ${secs(r.myGuess.t)}. Ora aspetta gli altri…</div>` : ""}
         ${isLead ? `<div class="note">È la tua immagine: goditi le facce degli altri 😄 Alla fine valuterai le risposte.</div>` : ""}
         <label>Hanno già risposto</label><div class="players" id="answered"></div>
         ${hostSkip}
@@ -713,17 +986,20 @@ function buildScreen(){
     case "judge":
       if (isLead){
         judgeMarks = {};
-        html = `<div class="card">
+        html = `<div class="card tabbed"><div class="tab red">VERDETTO</div>
+          ${turnPill()}
           <h2>⚖️ Valuta le risposte</h2>
-          ${r.answer ? `<p style="margin:0">La risposta era: <span class="answer">${esc(r.answer)}</span></p>` : ""}
-          <p class="muted" style="font-size:14px">✅ giusta = 50–100 punti · 🟡 ci si avvicina = 20–40 punti · più è veloce, più punti.</p>
+          ${r.answer ? `<p>La risposta era: <span class="answer">${esc(r.answer)}</span></p>` : ""}
+          <p class="muted" style="font-size:14px">✅ giusta = 50–100 punti · 🟡 vicina = 20–40 punti · più è veloce, più punti.</p>
           <ul class="glist" id="judgeList"></ul>
-          <button class="full" onclick="sendJudge()">Conferma i punteggi</button>
+          <button class="full" onclick="sendJudge()">🔨 Conferma i punteggi</button>
         </div>`;
       } else {
         html = `<div class="card">
+          ${turnPill()}
           ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div></div>` : ""}
-          <h2 class="center" style="margin-top:12px">Tempo scaduto! ${lead} sta valutando le risposte…</h2>
+          <div class="spacer"></div>
+          ${scene(80, "peek", `Tempo scaduto! <b>${lead}</b> sta esaminando le risposte…`)}
           ${r.myGuess ? `<p class="center muted">La tua risposta: <b>“${esc(r.myGuess.text)}”</b></p>` : `<p class="center muted">Non hai risposto in tempo.</p>`}
           ${hostSkip}
         </div>`;
@@ -733,23 +1009,44 @@ function buildScreen(){
     case "results": {
       const canNext = isLead || V.isHost;
       const list = (r.guesses || []).slice().sort((a,b) => b.pts - a.pts || a.t - b.t);
-      const icon = { ok:"✅", near:"🟡", no:"❌" };
+      const stampTxt = { ok:"Risolto!", near:"Quasi!", no:"Pista falsa" };
       html = `<div class="card">
+        ${turnPill()}
         ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div></div>` : ""}
-        <h2 class="center" style="margin-top:12px">${r.answer ? `Era: <span class="answer">${esc(r.answer)}</span>` : "Risultati del turno"}</h2>
-        <p class="center muted" style="margin-top:0">Immagine di ${lead}</p>
-        ${list.length ? `<ul class="glist">${list.map(g => `<li><div class="top">
+        <h2 class="center" style="margin-top:16px">${r.answer ? `Era: <span class="answer">${esc(r.answer)}</span>` : "Risultati del turno"}</h2>
+        <p class="center muted">Immagine di ${lead}</p>
+        ${list.length ? `<ul class="glist">${list.map((g, i) => `<li><div class="top">
             <span><b>${esc(g.name)}</b> <span class="muted">· ${secs(g.t)}</span></span>
-            <span class="pts ${g.mark}">${icon[g.mark] || ""} +${g.pts}</span></div>
-            <div class="txt">“${esc(g.text)}”</div></li>`).join("")}</ul>` : `<p class="center muted">Nessuno ha risposto 🙈</p>`}
-        ${canNext ? `<button class="full" onclick="send({type:'next'})">Prossimo turno ▶</button>` : `<p class="center muted">In attesa del prossimo turno…</p>`}
+            <span class="stamp ${g.mark} stamp-in" style="animation-delay:${.15 + i * .18}s;animation-fill-mode:both">${stampTxt[g.mark] || ""}</span></div>
+            <div class="top"><div class="txt">“${esc(g.text)}”</div><span class="gain ${g.mark}">+${g.pts}</span></div></li>`).join("")}</ul>`
+          : `<p class="center muted">Nessuno ha risposto 🙈</p>`}
+        ${canNext
+          ? `<button class="full" onclick="send({type:'next'})">${V.isLast ? "🏁 Classifica finale" : "Prossimo turno ▶"}</button>`
+          : `<p class="center muted">${V.isLast ? "In attesa della classifica finale…" : "In attesa del prossimo turno…"}</p>`}
+      </div>`;
+      break;
+    }
+
+    case "final": {
+      const ranked = V.players.slice().sort((a,b) => b.score - a.score);
+      const [p1, p2, p3] = ranked;
+      const col = (p, cls, medal, delay) => p ? `<div class="col ${cls} rise" style="animation-delay:${delay}s">
+          <div class="medal">${medal}</div><div class="who">${esc(p.name)}${p.id === V.you ? " (tu)" : ""}</div>
+          <div class="block">${p.score}</div></div>` : `<div class="col"></div>`;
+      const me1 = ranked.findIndex(p => p.id === V.you) + 1;
+      html = `<div class="card tabbed center"><div class="tab teal">CASO CHIUSO</div>
+        ${scene(130, "cheer", p1 ? `Caso risolto! Il miglior detective è <b>${esc(p1.name)}</b>! 🎉` : "Caso chiuso!")}
+        <div class="podium">${col(p2, "p2", "🥈", .5)}${col(p1, "p1", "🥇", .9)}${col(p3, "p3", "🥉", .2)}</div>
+        ${me1 ? `<p class="muted" style="margin-top:12px">Sei arrivato <b>${me1}°</b> su ${ranked.length}</p>` : ""}
+        ${V.isHost
+          ? `<div class="spacer"></div><button class="full" onclick="send({type:'newGame'})">🔁 Nuova partita</button>`
+          : `<p class="muted">In attesa che l'host avvii una nuova partita…</p>`}
       </div>`;
       break;
     }
   }
   $("#main").innerHTML = html;
 
-  // immagine sullo stage
   const st = $("#stage");
   if (st && r && images[r.n]){
     sizeStage(st, r.w, r.h);
@@ -763,7 +1060,8 @@ function buildScreen(){
   const gin = $("#gin");
   if (gin){ gin.addEventListener("keydown", e => { if (e.key === "Enter") sendGuess(); }); setTimeout(() => gin.focus(), 50); }
 
-  $("#side").innerHTML = ["lost","left","migrating"].includes(V.phase) ? "" :`<div class="card"><h2>🏆 Classifica</h2><ul class="scores" id="scores"></ul></div>`;
+  $("#side").innerHTML = ["lost","left","migrating","final"].includes(V.phase) ? (V.phase === "final" ? `<div class="card"><h2>📋 Classifica completa</h2><ul class="scores" id="scores"></ul></div>` : "")
+    : `<div class="card"><h2>🏆 Classifica</h2><ul class="scores" id="scores"></ul></div>`;
 }
 
 function sizeStage(el, w, h){
@@ -773,27 +1071,33 @@ function sizeStage(el, w, h){
 }
 
 function updateDynamic(){
-  if (!V) return;
+  if (!V || !V.players) return;
   const r = V.round;
+  const online = V.players.filter(p => p.online).length;
   const lp = $("#lobbyPlayers");
-  if (lp) lp.innerHTML = V.players.map(p => `<span class="pl ${p.online ? "" : "off"}">${p.id === "host" ? "👑 " : ""}${esc(p.name)}${p.id === V.you ? " (tu)" : ""}</span>`).join("");
+  if (lp) lp.innerHTML = V.players.map(p => `<span class="pl ${p.online ? "" : "off"}">${p.id === "host" ? "👑 " : "🕵️ "}${esc(p.name)}${p.id === V.you ? " (tu)" : ""}</span>`).join("");
   const sb = $("#startBtn");
   if (sb){
-    const n = V.players.filter(p => p.online).length;
-    sb.disabled = n < 2;
-    $("#startHint").textContent = n < 2 ? "Serve almeno un altro giocatore per iniziare." : `${n} giocatori pronti`;
+    sb.disabled = online < 2;
+    $("#startHint").textContent = online < 2 ? "Serve almeno un altro giocatore per iniziare." : `${online} detective pronti · ${V.giri * online} turni in tutto`;
   }
+  const gs = $("#giri");
+  if (gs) [...gs.options].forEach(o => { o.textContent = giriLabel(Number(o.value), online); });
+  const si = $("#settingsInfo");
+  if (si) si.textContent = `Partita da ${giriLabel(V.giri, online)} · zoom di ${V.duration / 1000} secondi`;
   const ans = $("#answered");
   if (ans && r){
     const others = V.players.filter(p => p.id !== r.leadId && (p.online || r.guessed.includes(p.id)));
-    ans.innerHTML = others.map(p => `<span class="pl ${r.guessed.includes(p.id) ? "done" : ""} ${p.online ? "" : "off"}">${r.guessed.includes(p.id) ? "✅ " : "… "}${esc(p.name)}</span>`).join("");
+    ans.innerHTML = others.map(p => { const d = r.guessed.includes(p.id);
+      return `<span class="pl ${d ? "done" : "wait"} ${p.online ? "" : "off"}">${d ? "✅ " : "🤔 "}${esc(p.name)}</span>`; }).join("");
   }
   const sc = $("#scores");
   if (sc){
     const sorted = V.players.slice().sort((a,b) => b.score - a.score);
     sc.innerHTML = sorted.map((p,i) => `<li class="${p.online ? "" : "off"}">
-      <span>${i === 0 && p.score > 0 ? "🥇 " : ""}${esc(p.name)}${p.id === V.you ? " (tu)" : ""}${r && p.id === r.leadId && V.phase !== "lobby" ? " 🎨" : ""}${p.online ? "" : " · offline"}</span>
-      <span><b>${p.score}</b>${V.isHost && p.id !== "host" ? ` <button class="sec small kick" title="Togli dalla partita" data-id="${p.id}" data-name="${esc(p.name)}" onclick="kickPlayer(this.dataset.id, this.dataset.name)">✕</button>` : ""}</span></li>`).join("");
+      <span style="display:flex;align-items:center;min-width:0"><span class="rank ${p.score > 0 && i < 3 ? "g" + (i+1) : ""}">${i+1}</span>
+        <span>${esc(p.name)}${p.id === V.you ? " <span class='muted'>(tu)</span>" : ""}${r && p.id === r.leadId && !["lobby","final"].includes(V.phase) ? " 🎨" : ""}${p.online ? "" : " <span class='muted'>· offline</span>"}</span></span>
+      <span style="flex:0 0 auto"><span class="pts">${p.score}</span>${V.isHost && p.id !== "host" ? ` <button class="sec small kick" title="Togli dalla partita" data-id="${p.id}" data-name="${esc(p.name)}" onclick="kickPlayer(this.dataset.id, this.dataset.name)">✕</button>` : ""}</span></li>`).join("");
   }
 }
 
@@ -825,20 +1129,20 @@ function renderDraft(){
   const area = $("#draftArea");
   if (!area || !draft) return;
   area.innerHTML = `
-    <div class="two" style="margin-top:14px">
+    <div class="two" style="margin-top:16px">
       <div>
-        <p class="mini-title">Tocca il punto di partenza dello zoom</p>
+        <p class="mini-title">👆 Tocca il punto di partenza dello zoom</p>
         <div class="stage pick" id="pickStage"><div class="img" id="pickImg"></div><div class="marker" id="marker"></div></div>
       </div>
       <div>
-        <p class="mini-title">Cosa vedranno all'inizio</p>
-        <div class="stage" id="prevStage"><div class="img" id="prevImg"></div></div>
+        <p class="mini-title">🔍 Cosa vedranno all'inizio</p>
+        <div class="stage" id="prevStage"><div class="img" id="prevImg"></div><div class="vignette"></div></div>
       </div>
     </div>
     <label for="ans">Cos'è? (opzionale, lo vedrai solo tu fino alla fine)</label>
     <input id="ans" type="text" maxlength="60" autocomplete="off" placeholder="Es. la grattugia di mia nonna" value="${esc(draft.answer)}">
     <div class="spacer"></div>
-    <button class="full" onclick="startRound()">🚀 Via!</button>`;
+    <button class="full red" onclick="startRound()">🚀 Via!</button>`;
   const ps = $("#pickStage"), pv = $("#prevStage");
   sizeStage(ps, draft.w, draft.h); sizeStage(pv, draft.w, draft.h);
   ps.style.width = "100%"; pv.style.width = "100%";
@@ -883,9 +1187,9 @@ function renderJudge(){
     const m = judgeMarks[g.id] || "no";
     const b = (k, label) => `<button class="${k} ${m === k ? "on" : ""}" onclick="setMark('${g.id}','${k}')">${label}</button>`;
     return `<li><div class="top"><span><b>${esc(g.name)}</b> <span class="muted">· ${secs(g.t)}</span></span>
-      <span class="muted">${m === "no" ? "0" : "+" + points(m, g.t, V.duration)}</span></div>
+      <span class="gain ${m}">${m === "no" ? "0" : "+" + points(m, g.t, V.duration)}</span></div>
       <div class="txt">“${esc(g.text)}”</div>
-      <div class="marks">${b("ok","✅ Giusta")}${b("near","🟡 Vicina")}${b("no","❌ No")}</div></li>`;
+      <div class="marks">${b("ok","✅ Giusta")}${b("near","🟡 Vicina")}${b("no","❌ Sbagliata")}</div></li>`;
   }).join("");
 }
 function setMark(id, k){ judgeMarks[id] = k; renderJudge(); }
@@ -894,6 +1198,7 @@ function sendJudge(){ send({ type:"judge", marks:judgeMarks }); }
 function reconnect(){ connecting = true; V = null; screenKey = ""; homeError = ""; renderHome(); connectToHost(); }
 
 /* ---------- Animazione ---------- */
+let lastCd = 0, lastSec = 0;
 function tick(){
   requestAnimationFrame(tick);
   if (!V || !V.round) return;
@@ -906,15 +1211,25 @@ function tick(){
     const total = V.duration + GRACE_MS;
     const left = Math.max(0, total - elapsed);
     const bar = $("#bar"); if (bar) bar.style.width = (left / total * 100) + "%";
-    const tl = $("#tleft"); if (tl) tl.textContent = Math.ceil(left / 1000) + " s";
+    const bw = $("#barWrap"); if (bw) bw.classList.toggle("low", left < 6000);
+    const sec = Math.ceil(left / 1000);
+    const tl = $("#tleft"); if (tl) tl.textContent = sec + " s";
     const pn = $("#pnow"); if (pn) pn.textContent = points("ok", elapsed, V.duration);
+    if (sec !== lastSec){ if (sec > 0 && sec <= 5 && !(V.round.myGuess) && V.round.leadId !== V.you) sfx.tick(); lastSec = sec; }
   } else if (V.phase === "countdown"){
     const cd = $("#cd");
-    if (cd) cd.textContent = Math.max(1, Math.ceil((cdAnchor.end - now) / 1000));
-  }
+    const n = Math.max(1, Math.ceil((cdAnchor.end - now) / 1000));
+    if (cd && cd.textContent !== String(n) || (cd && n !== lastCd)){
+      cd.textContent = n; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop");
+      if (n !== lastCd) sfx.beep();
+      lastCd = n;
+    }
+  } else { lastCd = 0; }
 }
 requestAnimationFrame(tick);
 
+$("#logoMascot").innerHTML = MASCOTS[MASCOT_CHOICE] || "";
+$("#muteBtn").textContent = sfx.muted ? "🔇" : "🔊";
 renderHome();
 </script>
 </body>
