@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Zoom Misterioso</title>
+<style>
+  :root{
+    --bg:#0f1220; --card:#181c30; --card2:#20253d; --line:#2c3252;
+    --text:#eef0f8; --muted:#9aa1bf; --accent:#ffcc33; --accent2:#3fd0c9;
+    --ok:#3ccf7a; --near:#f2b230; --no:#e5566b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  body{min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto;padding:14px 14px 40px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0;letter-spacing:.3px}
+  h1 span{color:var(--accent)}
+  h2{font-size:20px;margin:0 0 10px}
+  .chip{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;letter-spacing:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  .muted{color:var(--muted)}
+  .center{text-align:center}
+  label{display:block;font-size:14px;color:var(--muted);margin:10px 0 6px}
+  input[type=text],select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:#0c0f1b;color:var(--text);font-size:17px;outline:none}
+  input[type=text]:focus{border-color:var(--accent2)}
+  .code-input{text-transform:uppercase;letter-spacing:6px;font-weight:800;text-align:center}
+  button,.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px 18px;font-size:17px;font-weight:700;cursor:pointer;background:var(--accent);color:#1b1b1b;text-decoration:none;white-space:nowrap}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.sec{background:var(--card2);color:var(--text);border:1px solid var(--line)}
+  button.small{padding:8px 12px;font-size:14px}
+  .full{width:100%}
+  .row{display:flex;gap:10px;align-items:center}
+  .row > *{flex:1}
+  .or{display:flex;align-items:center;gap:10px;color:var(--muted);margin:18px 0}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+  .players{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .pl{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:15px}
+  .pl.off{opacity:.4}
+  .pl.done{border-color:var(--ok)}
+  .scores{list-style:none;margin:0;padding:0}
+  .scores li{display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--line)}
+  .scores li:last-child{border-bottom:0}
+  .scores li.off{opacity:.4}
+  .scores b{color:var(--accent)}
+  .stage{position:relative;margin:0 auto;overflow:hidden;border-radius:14px;background:#000;border:2px solid var(--line);max-width:100%}
+  .stage .img{position:absolute;inset:0;background-size:100% 100%;background-repeat:no-repeat;will-change:transform}
+  .stage.pick{cursor:crosshair}
+  .marker{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border:3px solid var(--accent);border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.5);pointer-events:none}
+  .marker::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;background:var(--accent);border-radius:50%}
+  .bar{height:10px;background:var(--card2);border-radius:999px;overflow:hidden;margin:12px 0 6px}
+  .bar > div{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));width:100%}
+  .stat{display:flex;justify-content:space-between;color:var(--muted);font-size:14px}
+  .stat b{color:var(--text)}
+  .big{font-size:96px;font-weight:900;text-align:center;color:var(--accent);line-height:1.1;margin:20px 0}
+  .guess{display:flex;gap:8px;margin-top:12px}
+  .guess input{flex:1}
+  .guess button{flex:0 0 auto}
+  .glist{list-style:none;margin:10px 0 0;padding:0}
+  .glist li{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .glist .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .glist .txt{font-size:18px;font-weight:700;word-break:break-word}
+  .marks{display:flex;gap:6px;margin-top:8px}
+  .marks button{flex:1;background:var(--card);color:var(--text);border:2px solid var(--line);font-size:15px;padding:9px 6px}
+  .marks button.on.ok{border-color:var(--ok);background:rgba(60,207,122,.15)}
+  .marks button.on.near{border-color:var(--near);background:rgba(242,178,48,.15)}
+  .marks button.on.no{border-color:var(--no);background:rgba(229,86,107,.15)}
+  .pts{font-weight:800}
+  .pts.ok{color:var(--ok)} .pts.near{color:var(--near)} .pts.no{color:var(--no)}
+  .answer{font-size:22px;font-weight:800;color:var(--accent)}
+  .note{background:rgba(63,208,201,.08);border:1px solid rgba(63,208,201,.35);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}
+  .err{background:rgba(229,86,107,.12);border:1px solid var(--no);border-radius:12px;padding:10px 12px;margin-top:10px}
+  .file-btn{position:relative;overflow:hidden}
+  .file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .two{display:grid;grid-template-columns:1fr;gap:12px}
+  @media (min-width:640px){.two{grid-template-columns:2fr 1fr}}
+  .mini-title{font-size:13px;color:var(--muted);margin:0 0 6px}
+  .spacer{height:10px}
+  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line);padding:10px 16px;border-radius:12px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🔍 Zoom <span>Misterioso</span></h1>
+    <div class="row" id="hdr" style="flex:0 0 auto"></div>
+  </header>
+  <div id="main"></div>
+  <div id="side"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+"use strict";
+/* ============ Costanti ============ */
+const PREFIX = "zoommisterioso-v1-";
+const ZOOM_MAX = 8;          // ingrandimento iniziale
+const GRACE_MS = 5000;       // secondi extra a immagine intera
+const COUNTDOWN_MS = 3000;
+const MAX_SIDE = 1200;       // lato massimo immagine (px)
+
+/* ============ Utilità ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clamp = (x,a,b) => Math.max(a, Math.min(b, x));
+const rid = (n=8) => Math.random().toString(36).slice(2, 2+n);
+const secs = ms => (ms/1000).toFixed(1).replace(".", ",") + " s";
+function points(mark, t, dur){
+  const f = clamp(1 - t/dur, 0, 1);
+  if (mark === "ok") return 50 + Math.round(50*f);
+  if (mark === "near") return 20 + Math.round(20*f);
+  return 0;
+}
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function store(k, v){ try{ if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
+
+/* ============ Stato locale ============ */
+let me = { id:null, name:"", isHost:false, code:"" };
+let peer = null;
+let hostConn = null;             // lato giocatore
+const conns = new Map();         // lato host: peerId -> {conn, pid}
+let G = null;                    // stato completo (solo host)
+let V = null;                    // vista corrente
+const images = {};               // n. turno -> dataURL
+let zoomAnchor = { key:null, start:0 };
+let cdAnchor = { key:null, end:0 };
+let screenKey = "";
+let draft = null;                // bozza upload del lead
+let judgeMarks = {};
+let homeError = "";
+let connecting = false;
+
+/* ============================================================
+   HOST: logica di gioco
+   ============================================================ */
+function hostInit(code){
+  G = { code, phase:"lobby", duration:30000, round:0, r:null,
+        players:[{ id:"host", name:me.name, score:0, online:true }] };
+  me.id = "host"; me.isHost = true; me.code = code;
+  window.addEventListener("beforeunload", e => { if (G && G.players.length > 1){ e.preventDefault(); e.returnValue = ""; } });
+  broadcast();
+}
+
+function hostOnConnection(conn){
+  conn.on("open", () => { if (!conns.has(conn.peer)) conns.set(conn.peer, { conn, pid:null }); });
+  conn.on("data", d => hostOnData(conn, d));
+  conn.on("close", () => hostOnClose(conn));
+  conn.on("error", () => hostOnClose(conn));
+}
+
+function hostOnData(conn, msg){
+  if (!msg || typeof msg !== "object") return;
+  let entry = conns.get(conn.peer);
+  if (!entry){ entry = { conn, pid:null }; conns.set(conn.peer, entry); }
+  if (msg.type === "join"){
+    let name = String(msg.name || "").trim().slice(0, 20) || "Giocatore";
+    let p = G.players.find(x => x.name.toLowerCase() === name.toLowerCase() && !x.online && x.id !== "host");
+    if (!p){
+      const base = name; let i = 2;
+      while (G.players.some(x => x.name.toLowerCase() === name.toLowerCase())) name = base + " " + (i++);
+      p = { id:"p" + rid(), name, score:0, online:true };
+      G.players.push(p);
+    }
+    p.online = true;
+    entry.pid = p.id;
+    safeSend(conn, { type:"welcome", pid:p.id, code:G.code });
+    if (G.r && G.r.image && G.phase !== "upload") safeSend(conn, { type:"image", n:G.r.n, data:G.r.image });
+    broadcast();
+    return;
+  }
+  if (!entry.pid) return;
+  act(entry.pid, msg);
+}
+
+function hostOnClose(conn){
+  const entry = conns.get(conn.peer);
+  conns.delete(conn.peer);
+  if (!entry || !entry.pid) return;
+  const p = G.players.find(x => x.id === entry.pid);
+  if (p) p.online = false;
+  if (G.r && G.r.leadId === entry.pid && G.phase === "upload") { nextRound(); return; }
+  if (G.phase === "zoom") checkAllGuessed();
+  broadcast();
+}
+
+function act(pid, msg){
+  const r = G.r, now = Date.now();
+  switch (msg.type){
+    case "start":
+      if (pid !== "host" || G.phase !== "lobby" || onlinePlayers().length < 2) return;
+      G.r = null; nextRound(true); return;
+    case "duration":
+      if (pid !== "host" || G.phase !== "lobby") return;
+      G.duration = clamp(Number(msg.ms) || 30000, 10000, 90000); break;
+    case "upload":
+      if (G.phase !== "upload" || !r || r.leadId !== pid) return;
+      if (typeof msg.image !== "string" || !msg.image.startsWith("data:image/")) return;
+      Object.assign(r, {
+        image: msg.image, w: Number(msg.w)||1, h: Number(msg.h)||1,
+        fx: clamp(Number(msg.fx), 0, 1), fy: clamp(Number(msg.fy), 0, 1),
+        answer: String(msg.answer || "").trim().slice(0, 60)
+      });
+      images[r.n] = r.image;
+      for (const e of conns.values()) if (e.pid) safeSend(e.conn, { type:"image", n:r.n, data:r.image });
+      G.phase = "countdown"; r.countdownEnd = now + COUNTDOWN_MS;
+      r.timer = setTimeout(startZoom, COUNTDOWN_MS);
+      break;
+    case "guess":
+      if (G.phase !== "zoom" || !r || pid === r.leadId || r.guesses[pid]) return;
+      { const text = String(msg.text || "").trim().slice(0, 60); if (!text) return;
+        r.guesses[pid] = { text, t: now - r.start }; }
+      if (checkAllGuessed()) return;
+      break;
+    case "judge":
+      if (G.phase !== "judge" || !r || r.leadId !== pid) return;
+      for (const gp of Object.keys(r.guesses)){
+        const m = (msg.marks || {})[gp];
+        const mark = (m === "ok" || m === "near") ? m : "no";
+        r.marks[gp] = mark;
+        r.points[gp] = points(mark, r.guesses[gp].t, G.duration);
+        const p = G.players.find(x => x.id === gp); if (p) p.score += r.points[gp];
+      }
+      G.phase = "results";
+      break;
+    case "next":
+      if (G.phase !== "results" || !r || (pid !== r.leadId && pid !== "host")) return;
+      nextRound(); return;
+    case "skip":
+      if (pid !== "host" || G.phase === "lobby" || G.phase === "results") return;
+      nextRound(); return;
+    default: return;
+  }
+  broadcast();
+}
+
+function onlinePlayers(){ return G.players.filter(p => p.online); }
+
+function nextRound(first){
+  if (G.r) clearTimeout(G.r.timer);
+  const list = G.players;
+  let idx = -1;
+  if (!first && G.r){ idx = list.findIndex(p => p.id === G.r.leadId); }
+  let lead = null;
+  for (let k = 1; k <= list.length; k++){
+    const p = list[(idx + k + list.length) % list.length];
+    if (p.online){ lead = p; break; }
+  }
+  if (!lead) lead = list[0];
+  G.round++;
+  G.r = { n:G.round, leadId:lead.id, guesses:{}, marks:{}, points:{} };
+  G.phase = "upload";
+  broadcast();
+}
+
+function startZoom(){
+  const r = G.r; if (!r || G.phase !== "countdown") return;
+  G.phase = "zoom"; r.start = Date.now();
+  r.timer = setTimeout(endGuessing, G.duration + GRACE_MS);
+  broadcast();
+}
+
+function checkAllGuessed(){
+  const r = G.r;
+  const need = onlinePlayers().filter(p => p.id !== r.leadId);
+  if (need.length && need.every(p => r.guesses[p.id])){ endGuessing(); return true; }
+  return false;
+}
+
+function endGuessing(){
+  const r = G.r; if (!r || G.phase !== "zoom") return;
+  clearTimeout(r.timer);
+  G.phase = "judge";
+  broadcast();
+}
+
+function viewFor(pid){
+  const r = G.r, now = Date.now();
+  const isLead = !!r && r.leadId === pid;
+  const reveal = G.phase === "results";
+  let round = null;
+  if (r){
+    const guessList = Object.entries(r.guesses).map(([id, g]) => ({
+      id, name:(G.players.find(p => p.id === id) || {}).name || "?", text:g.text, t:g.t,
+      mark: reveal ? r.marks[id] : undefined, pts: reveal ? r.points[id] : undefined
+    })).sort((a,b) => a.t - b.t);
+    round = {
+      n:r.n, leadId:r.leadId, hasImage:!!r.image, w:r.w, h:r.h,
+      fx: r.image ? r.fx : null, fy: r.image ? r.fy : null,
+      answer: (isLead || reveal) ? (r.answer || "") : null,
+      countdownLeft: G.phase === "countdown" ? Math.max(0, r.countdownEnd - now) : 0,
+      elapsed: G.phase === "zoom" ? now - r.start : 0,
+      guessed: Object.keys(r.guesses),
+      myGuess: r.guesses[pid] ? { text:r.guesses[pid].text, t:r.guesses[pid].t } : null,
+      guesses: ((isLead && G.phase === "judge") || reveal) ? guessList : null
+    };
+  }
+  return { code:G.code, phase:G.phase, you:pid, isHost:pid === "host", duration:G.duration,
+           players:G.players.map(p => ({ id:p.id, name:p.name, score:p.score, online:p.online })), round };
+}
+
+function broadcast(){
+  for (const e of conns.values()) if (e.pid) safeSend(e.conn, { type:"state", v:viewFor(e.pid) });
+  applyView(viewFor("host"));
+}
+
+function safeSend(conn, msg){ try{ if (conn.open) conn.send(msg); }catch(e){ console.warn(e); } }
+
+/* ============================================================
+   RETE: crea / entra
+   ============================================================ */
+function peerAvailable(){
+  if (typeof window.Peer === "undefined"){
+    homeError = "Non riesco a caricare la libreria di rete (PeerJS). Controlla la connessione internet e ricarica la pagina.";
+    renderHome(); return false;
+  }
+  return true;
+}
+
+function createGame(){
+  const name = ($("#name").value || "").trim();
+  if (!name){ $("#name").focus(); toast("Scrivi il tuo nome"); return; }
+  if (!peerAvailable()) return;
+  me.name = name; store("zm-name", name);
+  connecting = true; homeError = ""; renderHome();
+  const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const tryCode = (attempt) => {
+    const code = Array.from({length:4}, () => letters[Math.floor(Math.random()*letters.length)]).join("");
+    const p = new Peer(PREFIX + code);
+    p.on("open", () => { peer = p; hostInit(code); });
+    p.on("connection", hostOnConnection);
+    p.on("disconnected", () => { try{ p.reconnect(); }catch(e){} });
+    p.on("error", err => {
+      if (err && err.type === "unavailable-id" && attempt < 5){ p.destroy(); tryCode(attempt+1); return; }
+      if (G){ console.warn(err); return; }
+      connecting = false; homeError = "Errore di connessione: " + (err && err.type || err); renderHome();
+    });
+  };
+  tryCode(0);
+}
+
+function joinGame(){
+  const name = ($("#name").value || "").trim();
+  const code = ($("#code").value || "").trim().toUpperCase();
+  if (!name){ $("#name").focus(); toast("Scrivi il tuo nome"); return; }
+  if (code.length !== 4){ $("#code").focus(); toast("Il codice ha 4 lettere"); return; }
+  if (!peerAvailable()) return;
+  me.name = name; me.code = code; store("zm-name", name);
+  connecting = true; homeError = ""; renderHome();
+  connectToHost();
+}
+
+function connectToHost(){
+  if (peer){ try{ peer.destroy(); }catch(e){} }
+  let welcomed = false;
+  const p = new Peer();
+  peer = p;
+  const fail = (msg) => {
+    if (welcomed) return;
+    connecting = false; homeError = msg; V = null; screenKey = ""; renderHome();
+  };
+  const timeout = setTimeout(() => fail("Non riesco a raggiungere la stanza " + me.code + ". Controlla il codice o che l'host abbia la pagina aperta."), 15000);
+  p.on("open", () => {
+    const c = p.connect(PREFIX + me.code, { reliable:true });
+    hostConn = c;
+    c.on("open", () => c.send({ type:"join", name:me.name }));
+    c.on("data", msg => {
+      if (!msg) return;
+      if (msg.type === "welcome"){ welcomed = true; clearTimeout(timeout); me.id = msg.pid; connecting = false; }
+      else if (msg.type === "state") applyView(msg.v);
+      else if (msg.type === "image"){ images[msg.n] = msg.data; screenKey = ""; render(); }
+    });
+    c.on("close", lostHost);
+    c.on("error", lostHost);
+  });
+  p.on("error", err => {
+    if (err && err.type === "peer-unavailable"){ clearTimeout(timeout); fail("Stanza " + me.code + " non trovata. Controlla il codice."); return; }
+    if (!welcomed){ clearTimeout(timeout); fail("Errore di connessione: " + (err && err.type || err)); }
+    else console.warn(err);
+  });
+}
+
+function lostHost(){
+  if (!V) return;
+  V = Object.assign({}, V, { phase:"lost" });
+  screenKey = ""; render();
+}
+
+function send(msg){
+  if (me.isHost) act("host", msg);
+  else if (hostConn && hostConn.open) hostConn.send(msg);
+  else toast("Non sei connesso");
+}
+
+/* ============================================================
+   VISTA
+   ============================================================ */
+function applyView(v){
+  V = v;
+  const r = v.round;
+  if (v.phase === "zoom" && r){
+    const key = "z" + r.n, start = performance.now() - r.elapsed;
+    if (zoomAnchor.key !== key || Math.abs(zoomAnchor.start - start) > 400) zoomAnchor = { key, start };
+  }
+  if (v.phase === "countdown" && r){
+    const key = "c" + r.n, end = performance.now() + r.countdownLeft;
+    if (cdAnchor.key !== key || Math.abs(cdAnchor.end - end) > 400) cdAnchor = { key, end };
+  }
+  render();
+}
+
+const playerName = id => (V.players.find(p => p.id === id) || {}).name || "?";
+
+function render(){
+  if (!V){ renderHome(); return; }
+  const r = V.round;
+  const isLead = !!r && r.leadId === V.you;
+  const key = [V.phase, r && r.n, isLead, !!(r && r.myGuess), !!(r && images[r.n]), V.isHost].join("|");
+  if (key !== screenKey){ screenKey = key; buildScreen(); }
+  updateDynamic();
+}
+
+function header(){
+  if (!V){ $("#hdr").innerHTML = ""; return; }
+  $("#hdr").innerHTML = `<span class="chip" title="Codice stanza">${esc(V.code)}</span>
+    <button class="sec small" onclick="copyLink()">🔗 Copia link</button>`;
+}
+
+function inviteLink(){
+  const base = location.href.split("?")[0].split("#")[0];
+  return base + "?stanza=" + V.code;
+}
+function copyLink(){
+  const link = inviteLink();
+  const done = () => toast("Link copiato! Incollalo nella chat di Meet");
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(done, () => prompt("Copia questo link:", link));
+  else prompt("Copia questo link:", link);
+}
+
+/* ---------- Home ---------- */
+function renderHome(){
+  header();
+  $("#side").innerHTML = "";
+  const params = new URLSearchParams(location.search);
+  const preCode = (params.get("stanza") || "").toUpperCase().slice(0,4);
+  const prevName = ($("#name") && $("#name").value) || store("zm-name") || "";
+  const prevCode = ($("#code") && $("#code").value) || preCode;
+  const joinFirst = !!preCode;
+  const joinBox = `
+    <label for="code">Codice stanza</label>
+    <input id="code" class="code-input" type="text" maxlength="4" autocomplete="off" value="${esc(prevCode)}" placeholder="ABCD">
+    <div class="spacer"></div>
+    <button class="full ${joinFirst ? "" : "sec"}" onclick="joinGame()" ${connecting ? "disabled" : ""}>Entra nella partita</button>`;
+  const createBox = `<button class="full ${joinFirst ? "sec" : ""}" onclick="createGame()" ${connecting ? "disabled" : ""}>Crea una nuova partita</button>`;
+  $("#main").innerHTML = `
+    <div class="card">
+      <h2>Benvenuto!</h2>
+      <p class="muted" style="margin-top:0">A turno, un giocatore carica una foto: tutti la vedono partire super ingrandita e allargarsi piano piano. Chi indovina prima cos'è, vince più punti.</p>
+      <label for="name">Il tuo nome</label>
+      <input id="name" type="text" maxlength="20" autocomplete="off" value="${esc(prevName)}" placeholder="Es. Giulia">
+      <div class="spacer"></div>
+      ${joinFirst ? joinBox + `<div class="or">oppure</div>` + createBox : createBox + `<div class="or">oppure entra con un codice</div>` + joinBox}
+      ${connecting ? `<p class="center muted">Connessione in corso…</p>` : ""}
+      ${homeError ? `<div class="err">${esc(homeError)}</div>` : ""}
+    </div>`;
+  const codeEl = $("#code");
+  codeEl.addEventListener("keydown", e => { if (e.key === "Enter") joinGame(); });
+}
+
+/* ---------- Schermate di gioco ---------- */
+function buildScreen(){
+  header();
+  const r = V.round;
+  const isLead = !!r && r.leadId === V.you;
+  const lead = r ? esc(playerName(r.leadId)) : "";
+  const hostSkip = (V.isHost && !isLead && ["upload","countdown","zoom","judge"].includes(V.phase))
+      ? `<div class="spacer"></div><button class="sec small" onclick="if(confirm('Saltare questo turno?')) send({type:'skip'})">⏭ Salta turno (host)</button>` : "";
+  let html = "";
+
+  switch (V.phase){
+    case "lost":
+      html = `<div class="card center"><h2>Connessione persa 😕</h2>
+        <p class="muted">Non sei più collegato all'host. Se la sua pagina è ancora aperta puoi rientrare: il punteggio resta tuo.</p>
+        <button onclick="reconnect()">🔄 Riconnetti</button></div>`;
+      break;
+
+    case "lobby":
+      html = `<div class="card">
+        <h2>Sala d'attesa</h2>
+        ${V.isHost
+          ? `<p>Condividi il codice <span class="chip">${esc(V.code)}</span> oppure il link nella chat di Meet.</p>
+             <button class="sec" onclick="copyLink()">🔗 Copia link di invito</button>`
+          : `<p class="muted">Sei dentro! Aspetta che l'host faccia iniziare la partita.</p>`}
+        <label>Giocatori collegati</label>
+        <div class="players" id="lobbyPlayers"></div>
+        ${V.isHost ? `
+          <label for="dur">Durata dello zoom</label>
+          <select id="dur" onchange="send({type:'duration', ms:Number(this.value)})">
+            ${[20,30,45,60].map(s => `<option value="${s*1000}" ${V.duration === s*1000 ? "selected" : ""}>${s} secondi</option>`).join("")}
+          </select>
+          <div class="spacer"></div>
+          <button class="full" id="startBtn" onclick="send({type:'start'})">▶ Inizia partita</button>
+          <p class="muted center" id="startHint" style="font-size:14px"></p>` : ""}
+      </div>`;
+      break;
+
+    case "upload":
+      if (isLead){
+        html = `<div class="card">
+          <h2>🎨 Tocca a te!</h2>
+          <p class="muted" style="margin-top:0">Scegli una foto, poi tocca il punto da cui partirà lo zoom: più è strano il dettaglio, più sarà difficile.</p>
+          <div class="btn file-btn sec full" style="background:var(--card2);color:var(--text);border:1px solid var(--line)">📷 ${draft ? "Cambia immagine" : "Scegli immagine"}
+            <input type="file" accept="image/*" onchange="pickFile(this)"></div>
+          <div id="draftArea"></div>
+        </div>`;
+      } else {
+        html = `<div class="card center"><h2>⏳ ${lead} sta scegliendo un'immagine…</h2>
+          <p class="muted">Tieniti pronto: appena parte, scrivi la tua risposta il prima possibile.</p>${hostSkip}</div>`;
+      }
+      break;
+
+    case "countdown":
+      html = `<div class="card center"><h2>Preparati!</h2>
+        <p class="muted">Immagine di <b>${lead}</b></p>
+        <div class="big" id="cd">3</div>
+        ${!images[r.n] ? `<p class="muted">Sto ricevendo l'immagine…</p>` : ""}${hostSkip}</div>`;
+      break;
+
+    case "zoom": {
+      const canGuess = !isLead && !r.myGuess;
+      html = `<div class="card">
+        ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div></div>` : `<p class="center muted">Sto ricevendo l'immagine…</p>`}
+        <div class="bar"><div id="bar"></div></div>
+        <div class="stat"><span>Tempo: <b id="tleft">–</b></span><span>${isLead ? "" : `Punti in palio: <b id="pnow">100</b>`}</span></div>
+        ${canGuess ? `<div class="guess"><input id="gin" type="text" maxlength="60" autocomplete="off" placeholder="Cos'è?">
+          <button onclick="sendGuess()">Invia</button></div>
+          <p class="muted" style="font-size:13px;margin:6px 0 0">Hai una sola risposta: rispondi presto per fare più punti!</p>` : ""}
+        ${r.myGuess ? `<div class="note">Hai risposto <b>“${esc(r.myGuess.text)}”</b> dopo ${secs(r.myGuess.t)}. Ora aspetta gli altri…</div>` : ""}
+        ${isLead ? `<div class="note">È la tua immagine: goditi le facce degli altri 😄 Alla fine valuterai le risposte.</div>` : ""}
+        <label>Hanno già risposto</label><div class="players" id="answered"></div>
+        ${hostSkip}
+      </div>`;
+      break;
+    }
+
+    case "judge":
+      if (isLead){
+        judgeMarks = {};
+        html = `<div class="card">
+          <h2>⚖️ Valuta le risposte</h2>
+          ${r.answer ? `<p style="margin:0">La risposta era: <span class="answer">${esc(r.answer)}</span></p>` : ""}
+          <p class="muted" style="font-size:14px">✅ giusta = 50–100 punti · 🟡 ci si avvicina = 20–40 punti · più è veloce, più punti.</p>
+          <ul class="glist" id="judgeList"></ul>
+          <button class="full" onclick="sendJudge()">Conferma i punteggi</button>
+        </div>`;
+      } else {
+        html = `<div class="card">
+          ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div></div>` : ""}
+          <h2 class="center" style="margin-top:12px">Tempo scaduto! ${lead} sta valutando le risposte…</h2>
+          ${r.myGuess ? `<p class="center muted">La tua risposta: <b>“${esc(r.myGuess.text)}”</b></p>` : `<p class="center muted">Non hai risposto in tempo.</p>`}
+          ${hostSkip}
+        </div>`;
+      }
+      break;
+
+    case "results": {
+      const canNext = isLead || V.isHost;
+      const list = (r.guesses || []).slice().sort((a,b) => b.pts - a.pts || a.t - b.t);
+      const icon = { ok:"✅", near:"🟡", no:"❌" };
+      html = `<div class="card">
+        ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div></div>` : ""}
+        <h2 class="center" style="margin-top:12px">${r.answer ? `Era: <span class="answer">${esc(r.answer)}</span>` : "Risultati del turno"}</h2>
+        <p class="center muted" style="margin-top:0">Immagine di ${lead}</p>
+        ${list.length ? `<ul class="glist">${list.map(g => `<li><div class="top">
+            <span><b>${esc(g.name)}</b> <span class="muted">· ${secs(g.t)}</span></span>
+            <span class="pts ${g.mark}">${icon[g.mark] || ""} +${g.pts}</span></div>
+            <div class="txt">“${esc(g.text)}”</div></li>`).join("")}</ul>` : `<p class="center muted">Nessuno ha risposto 🙈</p>`}
+        ${canNext ? `<button class="full" onclick="send({type:'next'})">Prossimo turno ▶</button>` : `<p class="center muted">In attesa del prossimo turno…</p>`}
+      </div>`;
+      break;
+    }
+  }
+  $("#main").innerHTML = html;
+
+  // immagine sullo stage
+  const st = $("#stage");
+  if (st && r && images[r.n]){
+    sizeStage(st, r.w, r.h);
+    const img = $("#stageImg");
+    img.style.backgroundImage = `url("${images[r.n]}")`;
+    img.style.transformOrigin = `${r.fx*100}% ${r.fy*100}%`;
+    img.style.transform = V.phase === "zoom" ? `scale(${ZOOM_MAX})` : "scale(1)";
+  }
+  if (V.phase === "upload" && isLead) renderDraft();
+  if (V.phase === "judge" && isLead) renderJudge();
+  const gin = $("#gin");
+  if (gin){ gin.addEventListener("keydown", e => { if (e.key === "Enter") sendGuess(); }); setTimeout(() => gin.focus(), 50); }
+
+  $("#side").innerHTML = V.phase === "lost" ? "" : `<div class="card"><h2>🏆 Classifica</h2><ul class="scores" id="scores"></ul></div>`;
+}
+
+function sizeStage(el, w, h){
+  const ratio = (w || 1) / (h || 1);
+  el.style.aspectRatio = `${w} / ${h}`;
+  el.style.width = `min(100%, calc(55vh * ${ratio.toFixed(4)}))`;
+}
+
+function updateDynamic(){
+  if (!V) return;
+  const r = V.round;
+  const lp = $("#lobbyPlayers");
+  if (lp) lp.innerHTML = V.players.map(p => `<span class="pl ${p.online ? "" : "off"}">${p.id === "host" ? "👑 " : ""}${esc(p.name)}${p.id === V.you ? " (tu)" : ""}</span>`).join("");
+  const sb = $("#startBtn");
+  if (sb){
+    const n = V.players.filter(p => p.online).length;
+    sb.disabled = n < 2;
+    $("#startHint").textContent = n < 2 ? "Serve almeno un altro giocatore per iniziare." : `${n} giocatori pronti`;
+  }
+  const ans = $("#answered");
+  if (ans && r){
+    const others = V.players.filter(p => p.id !== r.leadId && (p.online || r.guessed.includes(p.id)));
+    ans.innerHTML = others.map(p => `<span class="pl ${r.guessed.includes(p.id) ? "done" : ""} ${p.online ? "" : "off"}">${r.guessed.includes(p.id) ? "✅ " : "… "}${esc(p.name)}</span>`).join("");
+  }
+  const sc = $("#scores");
+  if (sc){
+    const sorted = V.players.slice().sort((a,b) => b.score - a.score);
+    sc.innerHTML = sorted.map((p,i) => `<li class="${p.online ? "" : "off"}">
+      <span>${i === 0 && p.score > 0 ? "🥇 " : ""}${esc(p.name)}${p.id === V.you ? " (tu)" : ""}${r && p.id === r.leadId && V.phase !== "lobby" ? " 🎨" : ""}${p.online ? "" : " · offline"}</span>
+      <b>${p.score}</b></li>`).join("");
+  }
+}
+
+/* ---------- Upload del lead ---------- */
+async function pickFile(input){
+  const file = input.files && input.files[0];
+  if (!file) return;
+  try{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    let w = img.naturalWidth, h = img.naturalHeight;
+    const s = Math.min(1, MAX_SIDE / Math.max(w, h));
+    w = Math.round(w*s); h = Math.round(h*s);
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    c.getContext("2d").drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    const prevAnswer = draft ? draft.answer : "";
+    draft = { dataUrl:c.toDataURL("image/jpeg", 0.82), w, h, fx:0.5, fy:0.5, answer:prevAnswer };
+    screenKey = ""; render();
+  }catch(e){
+    console.warn(e);
+    toast("Non riesco ad aprire questa immagine. Prova con una JPG o PNG.");
+  }
+}
+
+function renderDraft(){
+  const area = $("#draftArea");
+  if (!area || !draft) return;
+  area.innerHTML = `
+    <div class="two" style="margin-top:14px">
+      <div>
+        <p class="mini-title">Tocca il punto di partenza dello zoom</p>
+        <div class="stage pick" id="pickStage"><div class="img" id="pickImg"></div><div class="marker" id="marker"></div></div>
+      </div>
+      <div>
+        <p class="mini-title">Cosa vedranno all'inizio</p>
+        <div class="stage" id="prevStage"><div class="img" id="prevImg"></div></div>
+      </div>
+    </div>
+    <label for="ans">Cos'è? (opzionale, lo vedrai solo tu fino alla fine)</label>
+    <input id="ans" type="text" maxlength="60" autocomplete="off" placeholder="Es. la grattugia di mia nonna" value="${esc(draft.answer)}">
+    <div class="spacer"></div>
+    <button class="full" onclick="startRound()">🚀 Via!</button>`;
+  const ps = $("#pickStage"), pv = $("#prevStage");
+  sizeStage(ps, draft.w, draft.h); sizeStage(pv, draft.w, draft.h);
+  ps.style.width = "100%"; pv.style.width = "100%";
+  $("#pickImg").style.backgroundImage = $("#prevImg").style.backgroundImage = `url("${draft.dataUrl}")`;
+  const place = () => {
+    $("#marker").style.left = draft.fx*100 + "%"; $("#marker").style.top = draft.fy*100 + "%";
+    const pi = $("#prevImg");
+    pi.style.transformOrigin = `${draft.fx*100}% ${draft.fy*100}%`;
+    pi.style.transform = `scale(${ZOOM_MAX})`;
+  };
+  place();
+  ps.addEventListener("click", e => {
+    const b = ps.getBoundingClientRect();
+    draft.fx = clamp((e.clientX - b.left) / b.width, 0, 1);
+    draft.fy = clamp((e.clientY - b.top) / b.height, 0, 1);
+    place();
+  });
+  $("#ans").addEventListener("input", e => { draft.answer = e.target.value; });
+}
+
+function startRound(){
+  if (!draft) return;
+  send({ type:"upload", image:draft.dataUrl, w:draft.w, h:draft.h, fx:draft.fx, fy:draft.fy, answer:draft.answer });
+  draft = null;
+}
+
+/* ---------- Risposte ---------- */
+function sendGuess(){
+  const el = $("#gin"); if (!el) return;
+  const text = el.value.trim();
+  if (!text){ el.focus(); return; }
+  send({ type:"guess", text });
+  el.disabled = true;
+}
+
+/* ---------- Giudizio ---------- */
+function renderJudge(){
+  const ul = $("#judgeList"); if (!ul) return;
+  const list = V.round.guesses || [];
+  if (!list.length){ ul.innerHTML = `<li class="center muted">Nessuno ha risposto 🙈</li>`; return; }
+  ul.innerHTML = list.map(g => {
+    const m = judgeMarks[g.id] || "no";
+    const b = (k, label) => `<button class="${k} ${m === k ? "on" : ""}" onclick="setMark('${g.id}','${k}')">${label}</button>`;
+    return `<li><div class="top"><span><b>${esc(g.name)}</b> <span class="muted">· ${secs(g.t)}</span></span>
+      <span class="muted">${m === "no" ? "0" : "+" + points(m, g.t, V.duration)}</span></div>
+      <div class="txt">“${esc(g.text)}”</div>
+      <div class="marks">${b("ok","✅ Giusta")}${b("near","🟡 Vicina")}${b("no","❌ No")}</div></li>`;
+  }).join("");
+}
+function setMark(id, k){ judgeMarks[id] = k; renderJudge(); }
+function sendJudge(){ send({ type:"judge", marks:judgeMarks }); }
+
+function reconnect(){ connecting = true; V = null; screenKey = ""; homeError = ""; renderHome(); connectToHost(); }
+
+/* ---------- Animazione ---------- */
+function tick(){
+  requestAnimationFrame(tick);
+  if (!V || !V.round) return;
+  const now = performance.now();
+  if (V.phase === "zoom"){
+    const el = $("#stageImg");
+    const elapsed = now - zoomAnchor.start;
+    const p = clamp(elapsed / V.duration, 0, 1);
+    if (el) el.style.transform = `scale(${Math.pow(ZOOM_MAX, 1 - p)})`;
+    const total = V.duration + GRACE_MS;
+    const left = Math.max(0, total - elapsed);
+    const bar = $("#bar"); if (bar) bar.style.width = (left / total * 100) + "%";
+    const tl = $("#tleft"); if (tl) tl.textContent = Math.ceil(left / 1000) + " s";
+    const pn = $("#pnow"); if (pn) pn.textContent = points("ok", elapsed, V.duration);
+  } else if (V.phase === "countdown"){
+    const cd = $("#cd");
+    if (cd) cd.textContent = Math.max(1, Math.ceil((cdAnchor.end - now) / 1000));
+  }
+}
+requestAnimationFrame(tick);
+
+renderHome();
+</script>
+</body>
+</html>
