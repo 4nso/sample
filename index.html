@@ -166,6 +166,22 @@
   .rise{animation:rise .6s ease-out both}
   @keyframes rise{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .chipbtn{background:var(--white);font-size:15px;padding:7px 12px;border-width:2.5px;border-radius:999px;box-shadow:0 3px 0 var(--ink)}
+  .chipbtn.on{background:var(--mustard)}
+  .chipbtn.small{font-size:13px;padding:5px 10px}
+  .rule{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--white);border:2.5px solid var(--ink);border-radius:14px;padding:10px 12px;margin-top:8px;cursor:pointer;user-select:none}
+  .rule .d{font-size:13px;color:var(--muted);line-height:1.25;margin-top:2px}
+  .switch{flex:0 0 auto;width:52px;height:30px;border:2.5px solid var(--ink);border-radius:999px;background:#e9dcc3;position:relative;transition:background .15s}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:var(--white);border:2.5px solid var(--ink);transition:left .15s}
+  .switch.on{background:var(--teal)} .switch.on::after{left:23px}
+  .rules-sum{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
+  .stage canvas.pix{position:absolute;inset:0;width:100%;height:100%;display:none;image-rendering:pixelated}
+  .stage .torch{position:absolute;inset:0;display:none;pointer-events:none}
+  .band{position:absolute;display:none;border:3px dashed var(--mustard);background:rgba(242,182,50,.2);pointer-events:none;box-shadow:inset 0 0 0 2px var(--ink)}
+  .question{background:var(--white);border:3px solid var(--ink);border-radius:16px;padding:9px 14px;font-size:19px;font-weight:600;margin-bottom:12px;box-shadow:3px 3px 0 var(--ink);line-height:1.25}
+  .question small{display:block;font-family:var(--type);font-size:12px;color:var(--muted);font-weight:400;margin-bottom:2px}
+  .modepill{display:inline-block;font-size:14px;background:var(--white);border:2.5px solid var(--ink);border-radius:999px;padding:3px 10px;margin-bottom:12px;font-weight:500}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--white);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:10px 16px;border-radius:14px;opacity:0;transition:all .2s;pointer-events:none;font-weight:500;max-width:90vw;text-align:center;z-index:20}
   .toast.show{opacity:1;transform:translateX(-50%)}
   canvas.confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:30}
@@ -235,7 +251,7 @@ let leaving = false;             // sto uscendo volontariamente
    HOST: logica di gioco
    ============================================================ */
 function hostInit(code){
-  G = { code, phase:"lobby", duration:30000, giri:2, round:0, turnNo:0, r:null,
+  G = { code, phase:"lobby", duration:30000, giri:2, round:0, turnNo:0, r:null, settings:defaultSettings(),
         players:[{ id:"host", name:me.name, score:0, online:true, led:0 }] };
   me.id = "host"; me.isHost = true; me.code = code;
   broadcast();
@@ -244,6 +260,15 @@ function hostInit(code){
 window.addEventListener("beforeunload", e => {
   if (me.isHost && G && G.players.filter(p => p.online).length > 1){ e.preventDefault(); e.returnValue = ""; }
 });
+
+function defaultSettings(){ return { modes:{ move:true, light:true, pixel:true }, question:false }; }
+function cleanSettings(x){
+  const m = (x && x.modes) || {};
+  const modes = { move:!!m.move, light:!!m.light, pixel:!!m.pixel };
+  if (!modes.move && !modes.light && !modes.pixel) modes.move = true;
+  return { modes, question:!!(x && x.question) };
+}
+const MODE_NEEDS = { zoom:"move", pan:"move", light:"light", pixel:"pixel" };
 
 /* Rimuove un giocatore dalla partita (uscita volontaria o tolto dall'host) */
 function removePlayer(pid, why){
@@ -284,7 +309,7 @@ function hostHandover(){
   if (!heir || !heirEntry) return false;
   if (G.r) clearTimeout(G.r.timer);
   const snap = {
-    code:G.code, duration:G.duration, giri:G.giri, round:G.round, turnNo:G.turnNo,
+    code:G.code, duration:G.duration, giri:G.giri, round:G.round, turnNo:G.turnNo, settings:G.settings,
     phase: G.phase === "lobby" || G.phase === "final" ? G.phase : "playing",
     players: G.players.filter(p => p.id !== "host").map(p => ({
       id: p.id === heir.id ? "host" : p.id, name:p.name, score:p.score, online: p.id === heir.id, led:p.led || 0
@@ -309,7 +334,7 @@ function becomeHost(snap){
       peer = p; migrating = false;
       me.id = "host"; me.isHost = true; me.code = snap.code;
       G = { code:snap.code, phase:"lobby", duration:snap.duration, giri:snap.giri || 2, round:snap.round,
-            turnNo:snap.turnNo || 0, r:null, players:snap.players };
+            turnNo:snap.turnNo || 0, r:null, players:snap.players, settings:cleanSettings(snap.settings) };
       if (snap.phase === "final"){ G.phase = "final"; broadcast(); }
       else if (snap.phase !== "lobby") nextRound(true); else broadcast();
       toast("Ora sei tu l'host: tieni la pagina aperta!");
@@ -380,6 +405,9 @@ function act(pid, msg){
     case "duration":
       if (pid !== "host" || G.phase !== "lobby") return;
       G.duration = clamp(Number(msg.ms) || 30000, 10000, 90000); break;
+    case "settings":
+      if (pid !== "host" || G.phase !== "lobby") return;
+      G.settings = cleanSettings(msg.settings); break;
     case "giri":
       if (pid !== "host" || G.phase !== "lobby") return;
       G.giri = clamp(Math.round(Number(msg.n) || 1), 1, 5); break;
@@ -390,6 +418,11 @@ function act(pid, msg){
     case "upload":
       if (G.phase !== "upload" || !r || r.leadId !== pid) return;
       if (typeof msg.image !== "string" || !msg.image.startsWith("data:image/")) return;
+      { const mode = MODE_NEEDS[msg.mode] ? msg.mode : "zoom";
+        if (!G.settings.modes[MODE_NEEDS[mode]]) return;
+        const question = String(msg.question || "").trim().slice(0, 80);
+        if (G.settings.question && !question) return;
+        r.mode = mode; r.dir = ["lr","rl","tb","bt"].includes(msg.dir) ? msg.dir : "lr"; r.question = question; }
       Object.assign(r, {
         image: msg.image, w: Number(msg.w)||1, h: Number(msg.h)||1,
         fx: clamp(Number(msg.fx), 0, 1), fy: clamp(Number(msg.fy), 0, 1),
@@ -497,6 +530,7 @@ function viewFor(pid){
     })).sort((a,b) => a.t - b.t);
     round = {
       n:r.n, leadId:r.leadId, hasImage:!!r.image, w:r.w, h:r.h,
+      mode: r.image ? r.mode : null, dir: r.image ? r.dir : null, question: r.image ? (r.question || "") : null,
       fx: r.image ? r.fx : null, fy: r.image ? r.fy : null,
       answer: (isLead || reveal) ? (r.answer || "") : null,
       countdownLeft: G.phase === "countdown" ? Math.max(0, r.countdownEnd - now) : 0,
@@ -508,7 +542,7 @@ function viewFor(pid){
   }
   const left = remainingTurns();
   return { code:G.code, phase:G.phase, you:pid, isHost:pid === "host", duration:G.duration,
-           giri:G.giri, turnNo:G.turnNo, totalTurns:G.turnNo + left, isLast: G.phase === "results" && left === 0,
+           giri:G.giri, turnNo:G.turnNo, settings:G.settings, totalTurns:G.turnNo + left, isLast: G.phase === "results" && left === 0,
            players:G.players.map(p => ({ id:p.id, name:p.name, score:p.score, online:p.online })), round };
 }
 
@@ -670,6 +704,130 @@ function mascot(size, cls = ""){
 }
 function scene(size, cls, text){
   return `<div class="scene">${mascot(size, cls)}<div class="say">${text}</div></div>`;
+}
+
+/* ============================================================
+   MODALITÀ DI RIVELAZIONE
+   ============================================================ */
+const PAN_S = 3;
+const MODE_INFO = {
+  zoom:  { icon:"🔍", name:"Zoom",       hint:"👆 Tocca il punto da cui partirà lo zoom" },
+  pan:   { icon:"↔️", name:"Panoramica", hint:"👆 Tocca la fascia che la panoramica percorrerà" },
+  light: { icon:"🔦", name:"Torcia",     hint:"👆 Tocca dove la torcia finirà la sua ricerca" },
+  pixel: { icon:"👾", name:"Pixel",      hint:"L'immagine parte a quadrettoni e diventa nitida piano piano" }
+};
+const DIRS = { lr:["➡️","Da sinistra"], rl:["⬅️","Da destra"], tb:["⬇️","Dall'alto"], bt:["⬆️","Dal basso"] };
+const QSUGG = ["Cos'è?", "Dove siamo?", "Chi è?", "Che animale è?", "Cosa sta facendo?"];
+function modeLabel(R){
+  if (!R || !R.mode) return "";
+  const icon = R.mode === "pan" ? DIRS[R.dir || "lr"][0] : MODE_INFO[R.mode].icon;
+  return `<span class="modepill">${icon} ${MODE_INFO[R.mode].name}</span>`;
+}
+function allowedModes(st){
+  const m = (st && st.modes) || { move:true }, out = [];
+  if (m.move) out.push("zoom", "pan");
+  if (m.light) out.push("light");
+  if (m.pixel) out.push("pixel");
+  return out;
+}
+function stageHTML(id){
+  return `<div class="stage" id="${id}"><div class="img"></div><canvas class="pix"></canvas><div class="torch"></div><div class="vignette"></div></div>`;
+}
+function qBanner(r){
+  return r && r.question ? `<div class="question"><small>DOMANDA DEL CASO</small>❓ ${esc(r.question)}</div>` : "";
+}
+const imgObjs = {};
+function imgFor(key, url){
+  let o = imgObjs[key];
+  if (!o){ o = new Image(); o.src = url; imgObjs[key] = o; }
+  return o;
+}
+function windowAt(p, R){
+  const fx = R.fx ?? .5, fy = R.fy ?? .5;
+  p = clamp(p, 0, 1);
+  if (R.mode === "pan"){
+    const span = 1 - 1/PAN_S, P1 = .85;
+    const across = R.dir === "lr" || R.dir === "rl";
+    const line = clamp((across ? fy : fx) - .5/PAN_S, 0, span);
+    const prog = clamp(p / P1, 0, 1);
+    const along = (R.dir === "lr" || R.dir === "tb") ? prog * span : (1 - prog) * span;
+    let vx = across ? along : line, vy = across ? line : along, s = PAN_S;
+    if (p > P1){ const t = (p - P1) / (1 - P1); s = Math.pow(PAN_S, 1 - t); const k = (1 - 1/s) / span; vx *= k; vy *= k; }
+    return { s, vx, vy };
+  }
+  const s = Math.pow(ZOOM_MAX, 1 - p);
+  return { s, vx: fx * (1 - 1/s), vy: fy * (1 - 1/s) };
+}
+function torchAt(p, R){
+  const tx = R.fx ?? .5, ty = R.fy ?? .5, sx = 1 - tx, sy = 1 - ty;
+  const e = p * p * (3 - 2 * p), amp = .3 * (1 - p);
+  return { x: clamp(sx + (tx - sx) * e + amp * Math.sin(p * 11), 0, 1),
+           y: clamp(sy + (ty - sy) * e + amp * Math.cos(p * 8), 0, 1),
+           r: .07 + .95 * Math.pow(p, 2.3) };
+}
+function drawPixel(stage, cv, R, p, url, key){
+  const o = imgFor(key, url);
+  if (!o.complete || !o.naturalWidth) return;
+  const b = stage.getBoundingClientRect(), d = devicePixelRatio || 1;
+  const W = Math.max(1, Math.round(b.width * d)), H = Math.max(1, Math.round(b.height * d));
+  if (cv.width !== W || cv.height !== H){ cv.width = W; cv.height = H; cv._k = null; }
+  const cols = Math.max(5, Math.round(5 * Math.pow((R.w || 400) / 5, Math.pow(clamp(p, 0, 1), 1.5))));
+  const k = cols + "|" + key;
+  if (cv._k === k) return;
+  cv._k = k;
+  const rows = Math.max(3, Math.round(cols * (R.h || 1) / (R.w || 1)));
+  const tmp = drawPixel.tmp || (drawPixel.tmp = document.createElement("canvas"));
+  tmp.width = cols; tmp.height = rows;
+  const t = tmp.getContext("2d"); t.imageSmoothingEnabled = true; t.drawImage(o, 0, 0, cols, rows);
+  const c = cv.getContext("2d"); c.imageSmoothingEnabled = false; c.clearRect(0, 0, W, H); c.drawImage(tmp, 0, 0, W, H);
+}
+function renderReveal(stage, R, p, url, key){
+  if (!stage || !url) return;
+  const img = stage.querySelector(".img"), cv = stage.querySelector("canvas.pix"),
+        torch = stage.querySelector(".torch"), vig = stage.querySelector(".vignette");
+  if (img.dataset.k !== key){ img.style.backgroundImage = `url("${url}")`; img.dataset.k = key; }
+  const full = p >= 1;
+  if (vig) vig.style.display = full ? "none" : "block";
+  if (R.mode === "pixel" && !full){
+    img.style.visibility = "hidden"; cv.style.display = "block"; torch.style.display = "none";
+    drawPixel(stage, cv, R, p, url, key); return;
+  }
+  cv.style.display = "none"; img.style.visibility = "visible";
+  if (R.mode === "light"){
+    img.style.transform = "none";
+    if (full){ torch.style.display = "none"; return; }
+    torch.style.display = "block";
+    const t = torchAt(p, R), b = stage.getBoundingClientRect();
+    const rp = t.r * Math.hypot(b.width, b.height), soft = Math.max(8, rp * .22);
+    torch.style.background = `radial-gradient(circle at ${(t.x*100).toFixed(2)}% ${(t.y*100).toFixed(2)}%, rgba(255,236,190,.1) ${rp.toFixed(1)}px, rgba(12,8,4,.97) ${(rp + soft).toFixed(1)}px)`;
+    return;
+  }
+  torch.style.display = "none";
+  const w = windowAt(full ? 1 : p, R);
+  img.style.transformOrigin = "0 0";
+  img.style.transform = `translate(${(-w.vx * w.s * 100).toFixed(3)}%, ${(-w.vy * w.s * 100).toFixed(3)}%) scale(${w.s.toFixed(4)})`;
+}
+
+/* ---------- Regole del caso (lobby) ---------- */
+function rulesHTML(st){
+  const m = st.modes;
+  const row = (k, icon, title, desc, on, fn) => `<div class="rule" data-k="${k}" onclick="${fn}"><div><b>${icon} ${title}</b><div class="d">${desc}</div></div><div class="switch ${on ? "on" : ""}"></div></div>`;
+  return row("move", "🔍", "Movimento", "Zoom o panoramica in 4 direzioni", m.move, "toggleMode('move')")
+       + row("light", "🔦", "Torcia", "Immagine al buio, una luce la esplora", m.light, "toggleMode('light')")
+       + row("pixel", "👾", "Pixel", "Parte a quadrettoni e diventa nitida", m.pixel, "toggleMode('pixel')")
+       + `<label>Modalità domanda</label>`
+       + row("question", "❓", "Domanda obbligatoria", "Chi carica la foto deve scrivere cosa bisogna indovinare", st.question, "toggleQuestion()");
+}
+function toggleMode(k){
+  const st = JSON.parse(JSON.stringify(V.settings));
+  st.modes[k] = !st.modes[k];
+  if (!st.modes.move && !st.modes.light && !st.modes.pixel){ toast("Serve almeno una modalità attiva"); return; }
+  send({ type:"settings", settings:st });
+}
+function toggleQuestion(){
+  const st = JSON.parse(JSON.stringify(V.settings));
+  st.question = !st.question;
+  send({ type:"settings", settings:st });
 }
 
 /* ============================================================
@@ -937,10 +1095,12 @@ function buildScreen(){
               </select></div>
           </div>
           <p class="muted" style="font-size:14px;margin:8px 0 0">In un giro ognuno sceglie un'immagine una volta.</p>
+          <label>Modalità di rivelazione <span style="font-size:13px">(ognuno sceglie tra quelle attive)</span></label>
+          <div id="rulesBox"></div>
           <div class="spacer"></div>
           <button class="full" id="startBtn" onclick="send({type:'start'})">▶ Inizia partita</button>
           <p class="muted center" id="startHint" style="font-size:14px;margin:10px 0 0"></p>`
-        : `<p class="muted center" id="settingsInfo" style="margin-top:14px"></p>`}
+        : `<p class="muted center" id="settingsInfo" style="margin:14px 0 0"></p><div class="rules-sum" id="rulesSum"></div>`}
       </div>`;
       break;
     }
@@ -950,7 +1110,7 @@ function buildScreen(){
         html = `<div class="card tabbed"><div class="tab red">IL TUO TURNO</div>
           ${turnPill()}
           <h2>🎨 Tocca a te!</h2>
-          <p class="muted">Scegli una foto, poi tocca il punto da cui partirà lo zoom: più il dettaglio è strano, più sarà difficile.</p>
+          <p class="muted">Scegli una foto e decidi come svelarla agli altri: più parti da un dettaglio strano, più sarà difficile.</p>
           <div class="btn file-btn sec full">📷 ${draft ? "Cambia immagine" : "Scegli immagine"}
             <input type="file" accept="image/*" onchange="pickFile(this)"></div>
           <div id="draftArea"></div>
@@ -969,6 +1129,8 @@ function buildScreen(){
         ${turnPill()}
         <h2>Preparati, detective!</h2>
         <p class="muted">Immagine di <b>${lead}</b></p>
+        ${modeLabel(r)}
+        ${qBanner(r)}
         <div class="cdring" id="cd">3</div>
         ${!images[r.n] ? `<p class="muted">Sto ricevendo l'immagine…</p>` : ""}${hostSkip}</div>`;
       break;
@@ -976,11 +1138,13 @@ function buildScreen(){
     case "zoom": {
       const canGuess = !isLead && !r.myGuess;
       html = `<div class="card">
-        <div class="row" style="justify-content:space-between">${turnPill()}<span class="muted" style="flex:0 0 auto;margin-bottom:12px;font-size:15px">Immagine di <b>${lead}</b></span></div>
-        ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div><div class="vignette"></div></div>` : `<p class="center muted">Sto ricevendo l'immagine…</p>`}
+        <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:6px">${turnPill()}<span style="flex:0 0 auto">${modeLabel(r)}</span></div>
+        ${qBanner(r)}
+        ${images[r.n] ? stageHTML("stage") : `<p class="center muted">Sto ricevendo l'immagine…</p>`}
+        <p class="center muted" style="font-size:14px;margin:8px 0 0">Immagine di <b>${lead}</b></p>
         <div class="bar" id="barWrap"><div id="bar"></div></div>
         <div class="stat"><span>⏱ <b id="tleft">–</b></span><span>${isLead ? "" : `Punti in palio: <b id="pnow">100</b>`}</span></div>
-        ${canGuess ? `<div class="guess"><input id="gin" type="text" maxlength="60" autocomplete="off" placeholder="La tua ipotesi…">
+        ${canGuess ? `<div class="guess"><input id="gin" type="text" maxlength="60" autocomplete="off" placeholder="${r.question ? "La tua risposta…" : "La tua ipotesi…"}">
           <button onclick="sendGuess()">Invia</button></div>
           <p class="muted" style="font-size:14px;margin:8px 0 0">Una sola risposta: più sei veloce, più punti fai!</p>` : ""}
         ${r.myGuess ? `<div class="note">🕵️ Hai risposto <b>“${esc(r.myGuess.text)}”</b> dopo ${secs(r.myGuess.t)}. Ora aspetta gli altri…</div>` : ""}
@@ -997,6 +1161,7 @@ function buildScreen(){
         html = `<div class="card tabbed"><div class="tab red">VERDETTO</div>
           ${turnPill()}
           <h2>⚖️ Valuta le risposte</h2>
+          ${qBanner(r)}
           ${r.answer ? `<p>La risposta era: <span class="answer">${esc(r.answer)}</span></p>` : ""}
           <p class="muted" style="font-size:14px">✅ giusta = 50–100 punti · 🟡 vicina = 20–40 punti · più è veloce, più punti.</p>
           <ul class="glist" id="judgeList"></ul>
@@ -1005,7 +1170,8 @@ function buildScreen(){
       } else {
         html = `<div class="card">
           ${turnPill()}
-          ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div></div>` : ""}
+          ${qBanner(r)}
+          ${images[r.n] ? stageHTML("stage") : ""}
           <div class="spacer"></div>
           ${scene(80, "peek", `Tempo scaduto! <b>${lead}</b> sta esaminando le risposte…`)}
           ${r.myGuess ? `<p class="center muted">La tua risposta: <b>“${esc(r.myGuess.text)}”</b></p>` : `<p class="center muted">Non hai risposto in tempo.</p>`}
@@ -1020,7 +1186,8 @@ function buildScreen(){
       const stampTxt = { ok:"Risolto!", near:"Quasi!", no:"Pista falsa" };
       html = `<div class="card">
         ${turnPill()}
-        ${images[r.n] ? `<div class="stage" id="stage"><div class="img" id="stageImg"></div></div>` : ""}
+        ${qBanner(r)}
+        ${images[r.n] ? stageHTML("stage") : ""}
         <h2 class="center" style="margin-top:16px">${r.answer ? `Era: <span class="answer">${esc(r.answer)}</span>` : "Risultati del turno"}</h2>
         <p class="center muted">Immagine di ${lead}</p>
         ${list.length ? `<ul class="glist">${list.map((g, i) => `<li><div class="top">
@@ -1058,10 +1225,7 @@ function buildScreen(){
   const st = $("#stage");
   if (st && r && images[r.n]){
     sizeStage(st, r.w, r.h);
-    const img = $("#stageImg");
-    img.style.backgroundImage = `url("${images[r.n]}")`;
-    img.style.transformOrigin = `${r.fx*100}% ${r.fy*100}%`;
-    img.style.transform = V.phase === "zoom" ? `scale(${ZOOM_MAX})` : "scale(1)";
+    renderReveal(st, r, V.phase === "zoom" ? 0 : 1, images[r.n], "r" + r.n);
   }
   if (V.phase === "upload" && isLead) renderDraft();
   if (V.phase === "judge" && isLead) renderJudge();
@@ -1093,6 +1257,15 @@ function updateDynamic(){
   if (gs) [...gs.options].forEach(o => { o.textContent = giriLabel(Number(o.value), online); });
   const si = $("#settingsInfo");
   if (si) si.textContent = `Partita da ${giriLabel(V.giri, online)} · zoom di ${V.duration / 1000} secondi`;
+  const rb = $("#rulesBox");
+  if (rb && V.settings) rb.innerHTML = rulesHTML(V.settings);
+  const rs = $("#rulesSum");
+  if (rs && V.settings){
+    const m = V.settings.modes, pills = [];
+    if (m.move) pills.push("🔍 Movimento"); if (m.light) pills.push("🔦 Torcia"); if (m.pixel) pills.push("👾 Pixel");
+    if (V.settings.question) pills.push("❓ Domanda obbligatoria");
+    rs.innerHTML = pills.map(t => `<span class="pl">${t}</span>`).join("");
+  }
   const ans = $("#answered");
   if (ans && r){
     const others = V.players.filter(p => p.id !== r.leadId && (p.online || r.guessed.includes(p.id)));
@@ -1124,8 +1297,9 @@ async function pickFile(input){
     const c = document.createElement("canvas"); c.width = w; c.height = h;
     c.getContext("2d").drawImage(img, 0, 0, w, h);
     URL.revokeObjectURL(url);
-    const prevAnswer = draft ? draft.answer : "";
-    draft = { dataUrl:c.toDataURL("image/jpeg", 0.82), w, h, fx:0.5, fy:0.5, answer:prevAnswer };
+    const old = draft || {};
+    draft = { dataUrl:c.toDataURL("image/jpeg", 0.82), w, h, fx:0.5, fy:0.5, key:"d" + rid(),
+              answer:old.answer || "", question:old.question || "", mode:old.mode || allowedModes(V.settings)[0], dir:old.dir || "lr" };
     screenKey = ""; render();
   }catch(e){
     console.warn(e);
@@ -1133,47 +1307,80 @@ async function pickFile(input){
   }
 }
 
+let previewStart = 0;
 function renderDraft(){
   const area = $("#draftArea");
   if (!area || !draft) return;
+  const modes = allowedModes(V.settings);
+  if (!modes.includes(draft.mode)) draft.mode = modes[0];
+  const qOn = !!(V.settings && V.settings.question);
   area.innerHTML = `
-    <div class="two" style="margin-top:16px">
+    <label>Come vuoi svelarla?</label>
+    <div class="chips" id="modeChips"></div>
+    <div class="chips" id="dirChips" style="margin-top:8px"></div>
+    <div class="two" style="margin-top:14px">
       <div>
-        <p class="mini-title">👆 Tocca il punto di partenza dello zoom</p>
-        <div class="stage pick" id="pickStage"><div class="img" id="pickImg"></div><div class="marker" id="marker"></div></div>
+        <p class="mini-title" id="pickHint"></p>
+        <div class="stage pick" id="pickStage"><div class="img" id="pickImg"></div><div class="band" id="band"></div><div class="marker" id="marker"></div></div>
       </div>
       <div>
-        <p class="mini-title">🔍 Cosa vedranno all'inizio</p>
-        <div class="stage" id="prevStage"><div class="img" id="prevImg"></div><div class="vignette"></div></div>
+        <p class="mini-title">🎬 Anteprima di cosa vedranno</p>
+        ${stageHTML("prevStage")}
       </div>
     </div>
-    <label for="ans">Cos'è? (opzionale, lo vedrai solo tu fino alla fine)</label>
+    ${qOn ? `<label for="qin">La domanda <b style="color:var(--tomato)">(obbligatoria)</b></label>
+      <div class="chips" style="margin-bottom:8px">${QSUGG.map(q => `<button class="chipbtn small" onclick="setQ(this.textContent)">${q}</button>`).join("")}</div>
+      <input id="qin" type="text" maxlength="80" autocomplete="off" placeholder="Es. Cosa tiene in mano il gatto?" value="${esc(draft.question)}">` : ""}
+    <label for="ans">${qOn ? "La risposta giusta" : "Cos'è?"} (opzionale, la vedrai solo tu fino alla fine)</label>
     <input id="ans" type="text" maxlength="60" autocomplete="off" placeholder="Es. la grattugia di mia nonna" value="${esc(draft.answer)}">
     <div class="spacer"></div>
     <button class="full red" onclick="startRound()">🚀 Via!</button>`;
   const ps = $("#pickStage"), pv = $("#prevStage");
   sizeStage(ps, draft.w, draft.h); sizeStage(pv, draft.w, draft.h);
   ps.style.width = "100%"; pv.style.width = "100%";
-  $("#pickImg").style.backgroundImage = $("#prevImg").style.backgroundImage = `url("${draft.dataUrl}")`;
-  const place = () => {
-    $("#marker").style.left = draft.fx*100 + "%"; $("#marker").style.top = draft.fy*100 + "%";
-    const pi = $("#prevImg");
-    pi.style.transformOrigin = `${draft.fx*100}% ${draft.fy*100}%`;
-    pi.style.transform = `scale(${ZOOM_MAX})`;
-  };
-  place();
+  $("#pickImg").style.backgroundImage = `url("${draft.dataUrl}")`;
   ps.addEventListener("click", e => {
+    if (draft.mode === "pixel") return;
     const b = ps.getBoundingClientRect();
     draft.fx = clamp((e.clientX - b.left) / b.width, 0, 1);
     draft.fy = clamp((e.clientY - b.top) / b.height, 0, 1);
-    place();
+    updateDraftUI();
   });
   $("#ans").addEventListener("input", e => { draft.answer = e.target.value; });
+  const qi = $("#qin"); if (qi) qi.addEventListener("input", e => { draft.question = e.target.value; });
+  updateDraftUI();
 }
+
+function updateDraftUI(){
+  if (!draft || !$("#modeChips")) return;
+  const modes = allowedModes(V.settings);
+  $("#modeChips").innerHTML = modes.map(m => `<button class="chipbtn ${draft.mode === m ? "on" : ""}" onclick="setDraftMode('${m}')">${MODE_INFO[m].icon} ${MODE_INFO[m].name}</button>`).join("");
+  $("#dirChips").innerHTML = draft.mode === "pan"
+    ? Object.entries(DIRS).map(([k, [i, l]]) => `<button class="chipbtn small ${draft.dir === k ? "on" : ""}" onclick="setDraftDir('${k}')">${i} ${l}</button>`).join("") : "";
+  $("#pickHint").textContent = MODE_INFO[draft.mode].hint;
+  const mk = $("#marker"), band = $("#band"), ps = $("#pickStage");
+  ps.classList.toggle("pick", draft.mode !== "pixel");
+  mk.style.display = (draft.mode === "zoom" || draft.mode === "light") ? "block" : "none";
+  mk.style.left = draft.fx * 100 + "%"; mk.style.top = draft.fy * 100 + "%";
+  if (draft.mode === "pan"){
+    const across = draft.dir === "lr" || draft.dir === "rl", span = 1 - 1/PAN_S;
+    band.style.display = "block";
+    if (across) Object.assign(band.style, { left:"0", width:"100%", top: clamp(draft.fy - .5/PAN_S, 0, span) * 100 + "%", height: 100/PAN_S + "%" });
+    else Object.assign(band.style, { top:"0", height:"100%", left: clamp(draft.fx - .5/PAN_S, 0, span) * 100 + "%", width: 100/PAN_S + "%" });
+  } else band.style.display = "none";
+  previewStart = performance.now();
+}
+function setDraftMode(m){ draft.mode = m; updateDraftUI(); }
+function setDraftDir(d){ draft.dir = d; updateDraftUI(); }
+function setQ(t){ const el = $("#qin"); if (!el) return; el.value = t; draft.question = t; el.focus(); }
 
 function startRound(){
   if (!draft) return;
-  send({ type:"upload", image:draft.dataUrl, w:draft.w, h:draft.h, fx:draft.fx, fy:draft.fy, answer:draft.answer });
+  if (V.settings && V.settings.question && !String(draft.question || "").trim()){
+    toast("Scrivi la domanda prima di partire ❓"); const q = $("#qin"); if (q) q.focus(); return;
+  }
+  send({ type:"upload", image:draft.dataUrl, w:draft.w, h:draft.h, fx:draft.fx, fy:draft.fy, answer:draft.answer,
+         mode:draft.mode, dir:draft.dir, question:draft.question });
   draft = null;
 }
 
@@ -1211,11 +1418,15 @@ function tick(){
   requestAnimationFrame(tick);
   if (!V || !V.round) return;
   const now = performance.now();
+  if (V.phase === "upload" && draft){
+    const pv = $("#prevStage");
+    if (pv){ const cyc = 4500, hold = 1000, t = (now - previewStart) % (cyc + hold); renderReveal(pv, draft, Math.min(1, t / cyc), draft.dataUrl, draft.key); }
+  }
   if (V.phase === "zoom"){
-    const el = $("#stageImg");
     const elapsed = now - zoomAnchor.start;
     const p = clamp(elapsed / V.duration, 0, 1);
-    if (el) el.style.transform = `scale(${Math.pow(ZOOM_MAX, 1 - p)})`;
+    const st = $("#stage");
+    if (st && images[V.round.n]) renderReveal(st, V.round, p, images[V.round.n], "r" + V.round.n);
     const total = V.duration + GRACE_MS;
     const left = Math.max(0, total - elapsed);
     const bar = $("#bar"); if (bar) bar.style.width = (left / total * 100) + "%";
