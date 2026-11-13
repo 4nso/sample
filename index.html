@@ -43,6 +43,8 @@
   .scores li{display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--line)}
   .scores li:last-child{border-bottom:0}
   .scores li.off{opacity:.4}
+  .scores li{align-items:center}
+  .kick{padding:3px 9px !important;margin-left:8px;font-size:12px !important}
   .scores b{color:var(--accent)}
   .stage{position:relative;margin:0 auto;overflow:hidden;border-radius:14px;background:#000;border:2px solid var(--line);max-width:100%}
   .stage .img{position:absolute;inset:0;background-size:100% 100%;background-repeat:no-repeat;will-change:transform}
@@ -135,6 +137,8 @@ let draft = null;                // bozza upload del lead
 let judgeMarks = {};
 let homeError = "";
 let connecting = false;
+let migrating = false;           // l'host sta passando a un altro giocatore
+let leaving = false;             // sto uscendo volontariamente
 
 /* ============================================================
    HOST: logica di gioco
@@ -143,8 +147,90 @@ function hostInit(code){
   G = { code, phase:"lobby", duration:30000, round:0, r:null,
         players:[{ id:"host", name:me.name, score:0, online:true }] };
   me.id = "host"; me.isHost = true; me.code = code;
-  window.addEventListener("beforeunload", e => { if (G && G.players.length > 1){ e.preventDefault(); e.returnValue = ""; } });
   broadcast();
+}
+
+window.addEventListener("beforeunload", e => {
+  if (me.isHost && G && G.players.filter(p => p.online).length > 1){ e.preventDefault(); e.returnValue = ""; }
+});
+
+/* Rimuove un giocatore dalla partita (uscita volontaria o tolto dall'host) */
+function removePlayer(pid, why){
+  const idx = G.players.findIndex(p => p.id === pid);
+  if (idx < 0 || pid === "host") return;
+  const [p] = G.players.splice(idx, 1);
+  for (const [k, e] of conns) if (e.pid === pid){
+    e.pid = null;
+    if (why === "kick") safeSend(e.conn, { type:"kicked" });
+    setTimeout(() => { try{ e.conn.close(); }catch(_){} }, 300);
+    conns.delete(k);
+  }
+  notice(`${p.name} ${why === "kick" ? "è stato tolto dalla partita" : "è uscito dalla partita"}`);
+  const r = G.r;
+  if (G.phase !== "lobby" && onlinePlayers().length < 2){
+    if (r) clearTimeout(r.timer);
+    G.phase = "lobby"; G.r = null;
+    notice("Siete rimasti in pochi: si torna in sala d'attesa");
+    broadcast(); return;
+  }
+  if (r && r.leadId === pid && G.phase !== "results" && G.phase !== "lobby"){
+    notice("Turno annullato, si passa al prossimo");
+    nextRound(false, idx - 1); return;
+  }
+  if (G.phase === "zoom" && checkAllGuessed()) return;
+  broadcast();
+}
+
+function notice(text){
+  for (const e of conns.values()) if (e.pid) safeSend(e.conn, { type:"notice", text });
+  toast(text);
+}
+
+/* L'host se ne va: passa il ruolo a un altro giocatore */
+function hostHandover(){
+  const heir = G.players.find(p => p.id !== "host" && p.online);
+  const heirEntry = heir && [...conns.values()].find(e => e.pid === heir.id);
+  if (!heir || !heirEntry) return false;
+  if (G.r) clearTimeout(G.r.timer);
+  const snap = {
+    code:G.code, duration:G.duration, round:G.round,
+    phase: G.phase === "lobby" ? "lobby" : "playing",
+    players: G.players.filter(p => p.id !== "host").map(p => ({
+      id: p.id === heir.id ? "host" : p.id, name:p.name, score:p.score, online: p.id === heir.id
+    }))
+  };
+  safeSend(heirEntry.conn, { type:"becomeHost", snap });
+  for (const e of conns.values()) if (e.pid && e.pid !== heir.id) safeSend(e.conn, { type:"migrating", newHost:heir.name });
+  return true;
+}
+
+/* Il nuovo host riceve lo stato e riapre la stanza con lo stesso codice */
+function becomeHost(snap){
+  migrating = true;
+  try{ hostConn && hostConn.close(); }catch(_){}
+  try{ peer && peer.destroy(); }catch(_){}
+  hostConn = null;
+  V = Object.assign({}, V || {}, { phase:"migrating", newHost:"te" }); screenKey = ""; render();
+  let tries = 0;
+  const attempt = () => {
+    const p = new Peer(PREFIX + snap.code);
+    p.on("open", () => {
+      peer = p; migrating = false;
+      me.id = "host"; me.isHost = true; me.code = snap.code;
+      G = { code:snap.code, phase:"lobby", duration:snap.duration, round:snap.round, r:null, players:snap.players };
+      if (snap.phase !== "lobby") nextRound(true); else broadcast();
+      toast("Ora sei tu l'host: tieni la pagina aperta!");
+    });
+    p.on("connection", hostOnConnection);
+    p.on("disconnected", () => { try{ p.reconnect(); }catch(e){} });
+    p.on("error", err => {
+      if (G && me.isHost){ console.warn(err); return; }
+      try{ p.destroy(); }catch(_){}
+      if (++tries < 15) setTimeout(attempt, 1500);
+      else { V = Object.assign({}, V, { phase:"lost" }); screenKey = ""; render(); }
+    });
+  };
+  setTimeout(attempt, 1200);
 }
 
 function hostOnConnection(conn){
@@ -155,7 +241,7 @@ function hostOnConnection(conn){
 }
 
 function hostOnData(conn, msg){
-  if (!msg || typeof msg !== "object") return;
+  if (!msg || typeof msg !== "object" || !G || !me.isHost) return;
   let entry = conns.get(conn.peer);
   if (!entry){ entry = { conn, pid:null }; conns.set(conn.peer, entry); }
   if (msg.type === "join"){
@@ -179,6 +265,7 @@ function hostOnData(conn, msg){
 }
 
 function hostOnClose(conn){
+  if (!G || !me.isHost) return;
   const entry = conns.get(conn.peer);
   conns.delete(conn.peer);
   if (!entry || !entry.pid) return;
@@ -214,7 +301,7 @@ function act(pid, msg){
     case "guess":
       if (G.phase !== "zoom" || !r || pid === r.leadId || r.guesses[pid]) return;
       { const text = String(msg.text || "").trim().slice(0, 60); if (!text) return;
-        r.guesses[pid] = { text, t: now - r.start }; }
+        r.guesses[pid] = { text, t: now - r.start, name:(G.players.find(p => p.id === pid) || {}).name }; }
       if (checkAllGuessed()) return;
       break;
     case "judge":
@@ -234,6 +321,12 @@ function act(pid, msg){
     case "skip":
       if (pid !== "host" || G.phase === "lobby" || G.phase === "results") return;
       nextRound(); return;
+    case "leave":
+      if (pid === "host") return;
+      removePlayer(pid, "leave"); return;
+    case "kick":
+      if (pid !== "host" || msg.pid === "host") return;
+      removePlayer(msg.pid, "kick"); return;
     default: return;
   }
   broadcast();
@@ -241,11 +334,12 @@ function act(pid, msg){
 
 function onlinePlayers(){ return G.players.filter(p => p.online); }
 
-function nextRound(first){
+function nextRound(first, fromIdx){
   if (G.r) clearTimeout(G.r.timer);
   const list = G.players;
   let idx = -1;
-  if (!first && G.r){ idx = list.findIndex(p => p.id === G.r.leadId); }
+  if (fromIdx !== undefined) idx = fromIdx;
+  else if (!first && G.r){ idx = list.findIndex(p => p.id === G.r.leadId); }
   let lead = null;
   for (let k = 1; k <= list.length; k++){
     const p = list[(idx + k + list.length) % list.length];
@@ -286,7 +380,7 @@ function viewFor(pid){
   let round = null;
   if (r){
     const guessList = Object.entries(r.guesses).map(([id, g]) => ({
-      id, name:(G.players.find(p => p.id === id) || {}).name || "?", text:g.text, t:g.t,
+      id, name:(G.players.find(p => p.id === id) || {}).name || g.name || "?", text:g.text, t:g.t,
       mark: reveal ? r.marks[id] : undefined, pts: reveal ? r.points[id] : undefined
     })).sort((a,b) => a.t - b.t);
     round = {
@@ -355,38 +449,93 @@ function joinGame(){
   connectToHost();
 }
 
-function connectToHost(){
+function connectToHost(retries = 0){
   if (peer){ try{ peer.destroy(); }catch(e){} }
-  let welcomed = false;
+  leaving = false;
+  let welcomed = false, done = false;
   const p = new Peer();
   peer = p;
   const fail = (msg) => {
-    if (welcomed) return;
+    if (welcomed || done) return;
+    done = true; clearTimeout(timeout);
+    if (retries > 0 && !leaving){ try{ p.destroy(); }catch(_){} setTimeout(() => connectToHost(retries - 1), 2000); return; }
+    migrating = false;
     connecting = false; homeError = msg; V = null; screenKey = ""; renderHome();
   };
-  const timeout = setTimeout(() => fail("Non riesco a raggiungere la stanza " + me.code + ". Controlla il codice o che l'host abbia la pagina aperta."), 15000);
+  const timeout = setTimeout(() => fail("Non riesco a raggiungere la stanza " + me.code + ". Controlla il codice o che l'host abbia la pagina aperta."), retries > 0 ? 6000 : 15000);
   p.on("open", () => {
     const c = p.connect(PREFIX + me.code, { reliable:true });
     hostConn = c;
     c.on("open", () => c.send({ type:"join", name:me.name }));
     c.on("data", msg => {
-      if (!msg) return;
-      if (msg.type === "welcome"){ welcomed = true; clearTimeout(timeout); me.id = msg.pid; connecting = false; }
-      else if (msg.type === "state") applyView(msg.v);
-      else if (msg.type === "image"){ images[msg.n] = msg.data; screenKey = ""; render(); }
+      if (!msg || c !== hostConn) return;
+      switch (msg.type){
+        case "welcome": welcomed = true; clearTimeout(timeout); me.id = msg.pid; connecting = false; migrating = false; break;
+        case "state": applyView(msg.v); break;
+        case "image": images[msg.n] = msg.data; screenKey = ""; render(); break;
+        case "notice": toast(msg.text); break;
+        case "kicked":
+          leaving = true;
+          V = Object.assign({}, V, { phase:"left", kicked:true }); screenKey = ""; render(); break;
+        case "migrating":
+          migrating = true;
+          V = Object.assign({}, V, { phase:"migrating", newHost:msg.newHost }); screenKey = ""; render();
+          hostConn = null;
+          try{ c.close(); }catch(_){}
+          setTimeout(() => connectToHost(12), 2500);
+          break;
+        case "becomeHost": becomeHost(msg.snap); break;
+      }
     });
-    c.on("close", lostHost);
-    c.on("error", lostHost);
+    c.on("close", () => { if (c === hostConn) lostHost(); });
+    c.on("error", () => { if (c === hostConn) lostHost(); });
   });
   p.on("error", err => {
-    if (err && err.type === "peer-unavailable"){ clearTimeout(timeout); fail("Stanza " + me.code + " non trovata. Controlla il codice."); return; }
-    if (!welcomed){ clearTimeout(timeout); fail("Errore di connessione: " + (err && err.type || err)); }
+    if (err && err.type === "peer-unavailable"){ fail("Stanza " + me.code + " non trovata. Controlla il codice."); return; }
+    if (!welcomed) fail("Errore di connessione: " + (err && err.type || err));
     else console.warn(err);
   });
 }
 
+/* Pulsante "Esci" */
+function leaveGame(){
+  if (me.isHost){
+    const others = G.players.filter(p => p.id !== "host" && p.online);
+    if (others.length){
+      if (!confirm(`Vuoi uscire? Il ruolo di host passerà a ${others[0].name} e la partita continuerà senza di te.`)) return;
+      hostHandover();
+    } else if (!confirm("Vuoi chiudere la partita?")) return;
+    leaving = true;
+    setTimeout(() => {
+      try{ peer && peer.destroy(); }catch(_){}
+      G = null; me.isHost = false; conns.clear();
+      V = { phase:"left", code:me.code, players:[], round:null }; screenKey = ""; render();
+    }, 600);
+    return;
+  }
+  if (!confirm("Vuoi uscire dalla partita? Gli altri continueranno a giocare.")) return;
+  leaving = true;
+  send({ type:"leave" });
+  setTimeout(() => {
+    const c = hostConn; hostConn = null;
+    try{ c && c.close(); }catch(_){}
+    try{ peer && peer.destroy(); }catch(_){}
+  }, 400);
+  V = Object.assign({}, V, { phase:"left" }); screenKey = ""; render();
+}
+
+function kickPlayer(pid, name){
+  if (confirm(`Togliere ${name} dalla partita?`)) send({ type:"kick", pid });
+}
+
+function goHome(){
+  V = null; screenKey = ""; connecting = false; homeError = ""; leaving = false;
+  history.replaceState(null, "", location.href.split("?")[0]);
+  renderHome();
+}
+
 function lostHost(){
-  if (!V) return;
+  if (!V || leaving || migrating) return;
   V = Object.assign({}, V, { phase:"lost" });
   screenKey = ""; render();
 }
@@ -426,9 +575,10 @@ function render(){
 }
 
 function header(){
-  if (!V){ $("#hdr").innerHTML = ""; return; }
+  if (!V || ["left","lost","migrating"].includes(V.phase)){ $("#hdr").innerHTML = ""; return; }
   $("#hdr").innerHTML = `<span class="chip" title="Codice stanza">${esc(V.code)}</span>
-    <button class="sec small" onclick="copyLink()">🔗 Copia link</button>`;
+    <button class="sec small" onclick="copyLink()">🔗 Copia link</button>
+    <button class="sec small" onclick="leaveGame()">🚪 Esci</button>`;
 }
 
 function inviteLink(){
@@ -483,6 +633,18 @@ function buildScreen(){
   let html = "";
 
   switch (V.phase){
+    case "left":
+      html = `<div class="card center"><h2>${V.kicked ? "Sei stato tolto dalla partita" : "Sei uscito dalla partita 👋"}</h2>
+        <p class="muted">${V.kicked ? "L'host ti ha rimosso." : "Gli altri possono continuare a giocare senza di te."}</p>
+        ${V.code && !me.isHost && !V.kicked ? `<button onclick="reconnect()">↩️ Rientra nella stanza ${esc(V.code)}</button><div class="spacer"></div>` : ""}
+        <button class="sec" onclick="goHome()">Torna all'inizio</button></div>`;
+      break;
+
+    case "migrating":
+      html = `<div class="card center"><h2>🔄 Cambio host…</h2>
+        <p class="muted">${V.newHost === "te" ? "L'host è uscito e <b>ora sei tu l'host</b>. Sto riaprendo la stanza: tieni questa pagina aperta!" : `L'host è uscito: <b>${esc(V.newHost)}</b> diventa il nuovo host. Mi ricollego in automatico, i punti restano.`}</p></div>`;
+      break;
+
     case "lost":
       html = `<div class="card center"><h2>Connessione persa 😕</h2>
         <p class="muted">Non sei più collegato all'host. Se la sua pagina è ancora aperta puoi rientrare: il punteggio resta tuo.</p>
@@ -601,7 +763,7 @@ function buildScreen(){
   const gin = $("#gin");
   if (gin){ gin.addEventListener("keydown", e => { if (e.key === "Enter") sendGuess(); }); setTimeout(() => gin.focus(), 50); }
 
-  $("#side").innerHTML = V.phase === "lost" ? "" : `<div class="card"><h2>🏆 Classifica</h2><ul class="scores" id="scores"></ul></div>`;
+  $("#side").innerHTML = ["lost","left","migrating"].includes(V.phase) ? "" :`<div class="card"><h2>🏆 Classifica</h2><ul class="scores" id="scores"></ul></div>`;
 }
 
 function sizeStage(el, w, h){
@@ -631,7 +793,7 @@ function updateDynamic(){
     const sorted = V.players.slice().sort((a,b) => b.score - a.score);
     sc.innerHTML = sorted.map((p,i) => `<li class="${p.online ? "" : "off"}">
       <span>${i === 0 && p.score > 0 ? "🥇 " : ""}${esc(p.name)}${p.id === V.you ? " (tu)" : ""}${r && p.id === r.leadId && V.phase !== "lobby" ? " 🎨" : ""}${p.online ? "" : " · offline"}</span>
-      <b>${p.score}</b></li>`).join("");
+      <span><b>${p.score}</b>${V.isHost && p.id !== "host" ? ` <button class="sec small kick" title="Togli dalla partita" data-id="${p.id}" data-name="${esc(p.name)}" onclick="kickPlayer(this.dataset.id, this.dataset.name)">✕</button>` : ""}</span></li>`).join("");
   }
 }
 
