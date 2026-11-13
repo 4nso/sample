@@ -22,7 +22,7 @@
     --ok:#2f9a58; --near:#d98a1c; --no:#d64545;
     --type:"Special Elite","Courier New",monospace;
   }
-  *{box-sizing:border-box}
+  *,*::before,*::after{box-sizing:border-box}
   html,body{margin:0;color:var(--ink);font:17px/1.4 "Fredoka",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   body{min-height:100vh;background:var(--paper) radial-gradient(rgba(59,42,30,.09) 1.3px, transparent 1.5px) 0 0/20px 20px}
   .wrap{max-width:760px;margin:0 auto;padding:12px 14px 50px}
@@ -172,9 +172,9 @@
   .chipbtn.small{font-size:13px;padding:5px 10px}
   .rule{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--white);border:2.5px solid var(--ink);border-radius:14px;padding:10px 12px;margin-top:8px;cursor:pointer;user-select:none}
   .rule .d{font-size:13px;color:var(--muted);line-height:1.25;margin-top:2px}
-  .switch{flex:0 0 auto;width:52px;height:30px;border:2.5px solid var(--ink);border-radius:999px;background:#e9dcc3;position:relative;transition:background .15s}
-  .switch::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:var(--white);border:2.5px solid var(--ink);transition:left .15s}
-  .switch.on{background:var(--teal)} .switch.on::after{left:23px}
+  .switch{flex:0 0 auto;width:54px;height:32px;border:3px solid var(--ink);border-radius:999px;background:#e9dcc3;position:relative;transition:background .15s}
+  .switch::after{content:"";position:absolute;top:50%;left:3px;width:20px;height:20px;margin-top:-10px;border-radius:50%;background:var(--white);border:2.5px solid var(--ink);transition:transform .15s}
+  .switch.on{background:var(--teal)} .switch.on::after{transform:translateX(22px)}
   .rules-sum{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
   .stage canvas.pix{position:absolute;inset:0;width:100%;height:100%;display:none;image-rendering:pixelated}
   .stage .torch{position:absolute;inset:0;display:none;pointer-events:none}
@@ -604,13 +604,13 @@ function connectToHost(retries = 0){
   const p = new Peer();
   peer = p;
   const fail = (msg) => {
-    if (welcomed || done) return;
+    if (welcomed || done || p !== peer) return;
     done = true; clearTimeout(timeout);
     if (retries > 0 && !leaving){ try{ p.destroy(); }catch(_){} setTimeout(() => connectToHost(retries - 1), 2000); return; }
     migrating = false;
     connecting = false; homeError = msg; V = null; screenKey = ""; renderHome();
   };
-  const timeout = setTimeout(() => fail("Non riesco a raggiungere la stanza " + me.code + ". Controlla il codice o che l'host abbia la pagina aperta."), retries > 0 ? 6000 : 15000);
+  const timeout = setTimeout(() => fail("Non riesco a raggiungere la stanza " + me.code + ". Controlla il codice o che l'host abbia la pagina aperta."), retries > 0 ? 6000 : 10000);
   p.on("open", () => {
     const c = p.connect(PREFIX + me.code, { reliable:true });
     hostConn = c;
@@ -651,13 +651,13 @@ function leaveGame(){
     const others = G.players.filter(p => p.id !== "host" && p.online);
     if (others.length){
       if (!confirm(`Vuoi uscire? Il ruolo di host passerà a ${others[0].name} e la partita continuerà senza di te.`)) return;
-      hostHandover();
-    } else if (!confirm("Vuoi chiudere la partita?")) return;
+    } else if (!confirm("Sei l'unico giocatore: uscendo la partita verrà chiusa. Continuare?")) return;
+    const handed = others.length ? hostHandover() : false;
     leaving = true;
     setTimeout(() => {
       try{ peer && peer.destroy(); }catch(_){}
       G = null; me.isHost = false; conns.clear();
-      V = { phase:"left", code:me.code, players:[], round:null }; screenKey = ""; render();
+      V = { phase:"left", code: handed ? me.code : null, closed: !handed, players:[], round:null }; screenKey = ""; render();
     }, 600);
     return;
   }
@@ -670,6 +670,14 @@ function leaveGame(){
     try{ peer && peer.destroy(); }catch(_){}
   }, 400);
   V = Object.assign({}, V, { phase:"left" }); screenKey = ""; render();
+}
+
+function cancelConnect(){
+  leaving = true;
+  try{ hostConn && hostConn.close(); }catch(_){}
+  try{ peer && peer.destroy(); }catch(_){}
+  hostConn = null; peer = null; connecting = false; migrating = false; homeError = ""; V = null; screenKey = "";
+  renderHome();
 }
 
 function kickPlayer(pid, name){
@@ -1026,7 +1034,7 @@ function renderHome(){
       <input id="name" type="text" maxlength="20" autocomplete="off" value="${esc(prevName)}" placeholder="Es. Giulia">
       <div class="spacer"></div>
       ${joinFirst ? joinBox + `<div class="or">oppure</div>` + createBox : createBox + `<div class="or">oppure entra con un codice</div>` + joinBox}
-      ${connecting ? `<p class="center muted" style="margin-top:12px">Connessione in corso…</p>` : ""}
+      ${connecting ? `<p class="center muted" style="margin-top:12px">Connessione in corso… <button class="sec small" onclick="cancelConnect()">Annulla</button></p>` : ""}
       ${homeError ? `<div class="err">${esc(homeError)}</div>` : ""}
     </div>`;
   $("#code").addEventListener("keydown", e => { if (e.key === "Enter") joinGame(); });
@@ -1053,8 +1061,8 @@ function buildScreen(){
     case "left":
       html = `<div class="card center">
         ${scene(110, "peek", V.kicked ? "L'host ti ha tolto dalla partita." : "A presto, detective! 👋")}
-        <h2>${V.kicked ? "Sei stato tolto dalla partita" : "Sei uscito dalla partita"}</h2>
-        <p class="muted">${V.kicked ? "Puoi sempre crearne una nuova." : "Gli altri possono continuare a giocare senza di te."}</p>
+        <h2>${V.kicked ? "Sei stato tolto dalla partita" : V.closed ? "Hai chiuso la partita" : "Sei uscito dalla partita"}</h2>
+        <p class="muted">${V.kicked ? "Puoi sempre crearne una nuova." : V.closed ? "La stanza non esiste più: quando vuoi puoi crearne una nuova." : "Gli altri possono continuare a giocare senza di te."}</p>
         ${V.code && !me.isHost && !V.kicked ? `<button onclick="reconnect()">↩️ Rientra nella stanza ${esc(V.code)}</button><div class="spacer"></div>` : ""}
         <button class="sec" onclick="goHome()">Torna all'inizio</button></div>`;
       break;
